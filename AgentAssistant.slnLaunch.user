@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "src\\Agent.Api\\Agent.Api.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "src\\Mcp.Tools.Server\\Mcp.Tools.Server.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

@@ -1,0 +1,109 @@
+<main class="page-shell">
+  <section class="chat-card" aria-label="Agent chat">
+    <header class="chat-header">
+      <div>
+        <p class="eyebrow">STEP 10</p>
+        <h1>Agent Assistant</h1>
+        <p class="subtitle">Angular + .NET + OpenAI + MCP + RAG</p>
+      </div>
+      <button
+        type="button"
+        class="clear-button"
+        (click)="clearConversation()"
+        [disabled]="isSending()">
+        שיחה חדשה
+      </button>
+    </header>
+
+    <section class="document-upload" aria-label="העלאת מסמך">
+      <div>
+        <strong>הוספת מסמך למאגר הידע</strong>
+        <span>בשלב זה ניתן להעלות קובץ TXT עד 2MB.</span>
+      </div>
+
+      <div class="upload-controls">
+        <label class="file-picker">
+          <input
+            type="file"
+            accept=".txt,text/plain"
+            (change)="onFileSelected($event)"
+            [disabled]="isUploading()" />
+          <span>{{ selectedFile?.name || 'בחירת קובץ' }}</span>
+        </label>
+
+        <button
+          type="button"
+          class="upload-button"
+          (click)="uploadDocument()"
+          [disabled]="!selectedFile || isUploading()">
+          {{ isUploading() ? 'מעלה…' : 'העלאה' }}
+        </button>
+      </div>
+
+      @if (isUploading()) {
+        <div class="progress-row" aria-live="polite">
+          <progress max="100" [value]="uploadProgress()"></progress>
+          <span>{{ uploadProgress() }}%</span>
+        </div>
+      }
+
+      @if (uploadMessage()) {
+        <p class="upload-status success-status">{{ uploadMessage() }}</p>
+      }
+
+      @if (uploadError()) {
+        <p class="upload-status error-status">{{ uploadError() }}</p>
+      }
+    </section>
+
+    <div class="messages" aria-live="polite">
+      @for (message of messages(); track message.id) {
+        <article
+          class="message"
+          [class.user-message]="message.role === 'user'"
+          [class.error-message]="message.isError">
+          <div class="message-meta">
+            <strong>{{ message.role === 'user' ? 'את' : 'Agent' }}</strong>
+            <time>{{ message.createdAt | date:'HH:mm' }}</time>
+          </div>
+          <p>{{ message.content }}</p>
+          @if (message.usedTools.length > 0) {
+            <div class="tool-list" aria-label="Tools used">
+              @for (tool of message.usedTools; track tool) {
+                <span>{{ tool }}</span>
+              }
+            </div>
+          }
+        </article>
+      }
+
+      @if (isSending()) {
+        <article class="message typing-message">
+          <div class="typing-dots" aria-label="Agent is responding">
+            <span></span><span></span><span></span>
+          </div>
+        </article>
+      }
+    </div>
+
+    <form class="composer" (ngSubmit)="send()">
+      <label for="message">הודעה</label>
+      <textarea
+        #messageInput
+        id="message"
+        name="message"
+        [(ngModel)]="draft"
+        (keydown)="handleKeydown($event)"
+        [disabled]="isSending()"
+        rows="3"
+        placeholder="למשל: מה מדיניות החופשה לפי המסמך שהעליתי?"
+      ></textarea>
+      <div class="composer-footer">
+        <span>Enter לשליחה · Shift+Enter לשורה חדשה</span>
+        <button type="submit" [disabled]="!draft.trim() || isSending()">
+          {{ isSending() ? 'שולח…' : 'שליחה' }}
+        </button>
+      </div>
+    </form>
+  </section>
+</main>
