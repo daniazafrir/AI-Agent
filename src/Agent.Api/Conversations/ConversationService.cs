@@ -1,37 +1,65 @@
-﻿namespace Agent.Api.Features.Conversation;
+﻿using Agent.Api.Features.Chat;
+using OpenAI.Chat;
+
+namespace Agent.Api.Features.Conversation;
 
 public sealed class ConversationService(
     IConversationStore conversationStore)
     : IConversationService
 {
-    public async Task<ChatResponse> ChatAsync(
-        ChatRequest request,
+    private const string UserRole = "user";
+    private const string AssistantRole = "assistant";
+
+    public async Task<List<ChatMessage>> BuildMessagesAsync(
+        Guid conversationId,
+        string currentUserMessage,
+        string? systemPrompt,
         CancellationToken cancellationToken = default)
     {
-        var conversationId =
-            request.ConversationId ?? Guid.NewGuid();
+        var messages = new List<ChatMessage>();
 
-        await conversationStore.AddMessageAsync(
-            conversationId,
-            "user",
-            request.Message,
-            cancellationToken);
-
-        // בשלב זה זו תשובת Placeholder.
-        // בשלב הבא נחבר ל-OpenAI ול-Tool Calling.
-        const string answer = "Agent placeholder response";
-
-        await conversationStore.AddMessageAsync(
-            conversationId,
-            "assistant",
-            answer,
-            cancellationToken);
-
-        return new ChatResponse
+        if (!string.IsNullOrWhiteSpace(systemPrompt))
         {
-            ConversationId = conversationId,
-            Answer = answer,
-            UsedTools = []
-        };
+            messages.Add(new SystemChatMessage(systemPrompt));
+        }
+
+        var history = await conversationStore.GetMessagesAsync(
+            conversationId,
+            cancellationToken);
+
+        foreach (var storedMessage in history)
+        {
+            if (string.Equals(storedMessage.Role, UserRole, StringComparison.OrdinalIgnoreCase))
+            {
+                messages.Add(new UserChatMessage(storedMessage.Content));
+            }
+            else if (string.Equals(storedMessage.Role, AssistantRole, StringComparison.OrdinalIgnoreCase))
+            {
+                messages.Add(new AssistantChatMessage(storedMessage.Content));
+            }
+        }
+
+        messages.Add(new UserChatMessage(currentUserMessage.Trim()));
+
+        return messages;
+    }
+
+    public async Task SaveConversationAsync(
+        Guid conversationId,
+        string userMessage,
+        string assistantMessage,
+        CancellationToken cancellationToken = default)
+    {
+        await conversationStore.AddMessageAsync(
+            conversationId,
+            UserRole,
+            userMessage,
+            cancellationToken);
+
+        await conversationStore.AddMessageAsync(
+            conversationId,
+            AssistantRole,
+            assistantMessage,
+            cancellationToken);
     }
 }

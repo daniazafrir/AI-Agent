@@ -1,5 +1,4 @@
-using System.Text.Json;
-using Agent.Api.Configuration;
+﻿using Agent.Api.Configuration;
 using Agent.Api.Contracts;
 using Agent.Api.Features.Chat;
 using Agent.Api.Features.Conversation;
@@ -7,20 +6,21 @@ using Agent.Api.Mcp;
 using Agent.Api.Tools;
 using Microsoft.Extensions.Options;
 using OpenAI.Chat;
+using System.Text.Json;
 
-namespace Agent.Api.Agent;
+namespace Agent.Api.Chat;
 
-public sealed class AgentService(
+public sealed class ChatOrchestrator(
     ChatClient chatClient,
     IMcpToolRegistry toolRegistry,
     IToolExecutor toolExecutor,
     IConversationService conversationService,
     IOptions<AgentOptions> agentOptions,
     IOptions<OpenAiOptions> openAiOptions,
-    ILogger<AgentService> logger)
-    : IAgentService
+    ILogger<ChatOrchestrator> logger)
+    : IChatOrchestrator
 {
-   
+
     private readonly AgentOptions _agentOptions = agentOptions.Value;
     private readonly OpenAiOptions _openAiOptions = openAiOptions.Value;
 

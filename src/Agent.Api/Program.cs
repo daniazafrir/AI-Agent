@@ -1,4 +1,5 @@
 using Agent.Api.Agent;
+using Agent.Api.Chat;
 using Agent.Api.Configuration;
 using Agent.Api.Conversations;
 using Agent.Api.Features.Chat;
@@ -88,8 +89,8 @@ builder.Services.AddScoped<IConversationStore, PostgresConversationStore>();
 builder.Services.AddSingleton<IMcpToolClient, McpToolClient>();
 builder.Services.AddSingleton<IMcpToolRegistry, McpToolRegistry>();
 builder.Services.AddScoped<IToolExecutor, ToolExecutor>();
-builder.Services.AddScoped<IAgentService, AgentService>();
-
+builder.Services.AddScoped<IChatOrchestrator, ChatOrchestrator>();
+builder.Services.AddScoped<IConversationService, ConversationService>();
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
