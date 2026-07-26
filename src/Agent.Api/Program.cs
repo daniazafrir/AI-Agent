@@ -1,8 +1,6 @@
-using Agent.Api.Agent;
 using Agent.Api.Chat;
 using Agent.Api.Configuration;
 using Agent.Api.Conversations;
-using Agent.Api.Features.Chat;
 using Agent.Api.Features.Conversation;
 using Agent.Api.Infrastructure.Persistence;
 using Agent.Api.Mcp;
@@ -16,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -26,13 +25,20 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.Configure<AgentOptions>(
-    builder.Configuration.GetSection(AgentOptions.SectionName));
+    builder.Configuration.GetSection(
+        AgentOptions.SectionName));
+
 builder.Services.Configure<OpenAiOptions>(
-    builder.Configuration.GetSection(OpenAiOptions.SectionName));
+    builder.Configuration.GetSection(
+        OpenAiOptions.SectionName));
+
 builder.Services.Configure<McpOptions>(
-    builder.Configuration.GetSection(McpOptions.SectionName));
+    builder.Configuration.GetSection(
+        McpOptions.SectionName));
+
 builder.Services.Configure<CorsOptions>(
-    builder.Configuration.GetSection(CorsOptions.SectionName));
+    builder.Configuration.GetSection(
+        CorsOptions.SectionName));
 
 var allowedOrigins =
     builder.Configuration
@@ -59,38 +65,70 @@ builder.Services.AddCors(options =>
     });
 });
 
-var connectionString = builder.Configuration.GetConnectionString("AgentDatabase")
+var connectionString =
+    builder.Configuration.GetConnectionString(
+        "AgentDatabase")
     ?? throw new InvalidOperationException(
         "Connection string 'AgentDatabase' is missing.");
 
 builder.Services.AddDbContext<AgentDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddSingleton<ChatClient>(serviceProvider =>
-{
-    var options = serviceProvider
-        .GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenAiOptions>>()
-        .Value;
-
-    var apiKey = !string.IsNullOrWhiteSpace(options.ApiKey)
-        ? options.ApiKey
-        : Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-
-    if (string.IsNullOrWhiteSpace(apiKey))
+builder.Services.AddSingleton<ChatClient>(
+    serviceProvider =>
     {
-        throw new InvalidOperationException(
-            "OpenAI API key is missing. Configure OpenAI:ApiKey or OPENAI_API_KEY.");
-    }
+        var options = serviceProvider
+            .GetRequiredService<
+                Microsoft.Extensions.Options
+                    .IOptions<OpenAiOptions>>()
+            .Value;
 
-    return new ChatClient(options.Model, apiKey);
-});
+        var apiKey =
+            !string.IsNullOrWhiteSpace(options.ApiKey)
+                ? options.ApiKey
+                : Environment.GetEnvironmentVariable(
+                    "OPENAI_API_KEY");
 
-builder.Services.AddScoped<IConversationStore, PostgresConversationStore>();
-builder.Services.AddSingleton<IMcpToolClient, McpToolClient>();
-builder.Services.AddSingleton<IMcpToolRegistry, McpToolRegistry>();
-builder.Services.AddScoped<IToolExecutor, ToolExecutor>();
-builder.Services.AddScoped<IChatOrchestrator, ChatOrchestrator>();
-builder.Services.AddScoped<IConversationService, ConversationService>();
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException(
+                "OpenAI API key is missing. " +
+                "Configure OpenAI:ApiKey or OPENAI_API_KEY.");
+        }
+
+        return new ChatClient(
+            options.Model,
+            apiKey);
+    });
+
+builder.Services.AddScoped<
+    IConversationStore,
+    PostgresConversationStore>();
+
+builder.Services.AddSingleton<
+    IMcpToolClient,
+    McpToolClient>();
+
+builder.Services.AddSingleton<
+    IMcpToolRegistry,
+    McpToolRegistry>();
+
+builder.Services.AddScoped<
+    IToolExecutor,
+    ToolExecutor>();
+
+builder.Services.AddScoped<
+    IConversationService,
+    ConversationService>();
+
+builder.Services.AddScoped<
+    IAgentRuntime,
+    AgentRuntime>();
+
+builder.Services.AddScoped<
+    IChatOrchestrator,
+    ChatOrchestrator>();
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -102,4 +140,5 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseHttpsRedirection();
 app.MapControllers();
+
 app.Run();
