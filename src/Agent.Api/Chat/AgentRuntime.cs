@@ -1,125 +1,154 @@
-﻿using System.Text.Json;
-using Agent.Api.Configuration;
+﻿using Agent.Api.Configuration;
 using Agent.Api.Mcp;
+using Agent.Api.OpenAI;
 using Agent.Api.Tools;
 using Microsoft.Extensions.Options;
 using OpenAI.Chat;
+using System.Text.Json;
 
 namespace Agent.Api.Chat;
 
 public sealed class AgentRuntime(
-    ChatClient chatClient,
+    IChatCompletionService chatCompletionService,
     IMcpToolRegistry toolRegistry,
     IToolExecutor toolExecutor,
     IOptions<OpenAiOptions> openAiOptions,
     ILogger<AgentRuntime> logger)
     : IAgentRuntime
 {
+    private const string EmptyAssistantResponse =
+        "The agent completed the request but returned no textual response.";
+
     private readonly OpenAiOptions _openAiOptions = openAiOptions.Value;
 
     public async Task<AgentRunResult> RunAsync(
-        ICollection<ChatMessage> messages,
-        CancellationToken cancellationToken = default)
+      ICollection<ChatMessage> messages,
+      CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(messages);
 
-        await toolRegistry.InitializeAsync(cancellationToken);
+        await InitializeToolsAsync(cancellationToken);
 
-        var completionOptions = CreateCompletionOptions();
-        var usedTools = new List<string>();
+        var context = CreateContext(messages);
 
-        var maxToolRounds = Math.Clamp(
-            _openAiOptions.MaxToolRounds,
-            1,
-            10);
-
-        for (var round = 1; round <= maxToolRounds; round++)
+        while (context.CurrentRound < context.MaxRounds)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            context.NextRound();
 
-            logger.LogInformation(
-                "Calling OpenAI; agent round {Round} of {MaxToolRounds}.",
-                round,
-                maxToolRounds);
+            ChatCompletionResult completion =
+                await CompleteChatAsync(context, cancellationToken);
 
-            ChatCompletion completion =
-                await chatClient.CompleteChatAsync(
-                    messages,
-                    completionOptions,
-                    cancellationToken);
+            if (completion.FinishReason == ChatFinishReason.Stop)
+            {
+                return BuildResult(completion, context);
+            }
 
             if (completion.FinishReason == ChatFinishReason.ToolCalls)
             {
-                messages.Add(new AssistantChatMessage(completion));
+                if (completion.ToolCalls.Count == 0)
+                {
+                    throw new InvalidOperationException(
+                        "OpenAI returned ToolCalls finish reason without any tool calls.");
+                }
 
                 await ExecuteToolCallsAsync(
                     completion,
-                    messages,
-                    usedTools,
+                    context,
                     cancellationToken);
 
                 continue;
             }
 
-            if (completion.FinishReason != ChatFinishReason.Stop)
-            {
-                throw new InvalidOperationException(
-                    $"Unexpected OpenAI finish reason: " +
-                    $"{completion.FinishReason}.");
-            }
-
-            return new AgentRunResult
-            {
-                AssistantMessage = GetAssistantText(completion),
-
-                UsedTools = usedTools
-                    .Distinct(StringComparer.Ordinal)
-                    .ToArray()
-            };
+            throw new InvalidOperationException(
+                $"Unsupported finish reason: {completion.FinishReason}");
         }
 
         throw new InvalidOperationException(
-            $"The agent exceeded the maximum number of tool rounds " +
-            $"({maxToolRounds}).");
+            $"Agent exceeded the maximum number of {context.MaxRounds} rounds.");
+    }
+
+    private Task InitializeToolsAsync(
+        CancellationToken cancellationToken)
+    {
+        return toolRegistry.InitializeAsync(cancellationToken);
+    }
+
+    private AgentContext CreateContext(
+        ICollection<ChatMessage> messages)
+    {
+        var maxRounds = Math.Clamp(
+            _openAiOptions.MaxToolRounds,
+            1,
+            10);
+
+        return new AgentContext(
+            messages,
+            CreateCompletionOptions(),
+            maxRounds);
     }
 
     private ChatCompletionOptions CreateCompletionOptions()
     {
         var options = new ChatCompletionOptions();
 
-        foreach (var tool in toolRegistry.Definitions)
+        foreach (var toolDefinition in toolRegistry.Definitions)
         {
-            options.Tools.Add(tool);
+            options.Tools.Add(toolDefinition);
         }
 
         return options;
     }
 
-    private async Task ExecuteToolCallsAsync(
-        ChatCompletion completion,
-        ICollection<ChatMessage> messages,
-        ICollection<string> usedTools,
-        CancellationToken cancellationToken)
+    private Task<ChatCompletionResult> CompleteChatAsync(
+    AgentContext context,
+    CancellationToken cancellationToken)
     {
-        foreach (var toolCall in completion.ToolCalls)
+        logger.LogInformation(
+            "Calling OpenAI; agent round {CurrentRound} of {MaxRounds}.",
+            context.CurrentRound,
+            context.MaxRounds);
+
+        return chatCompletionService.CompleteAsync(
+            context.Messages,
+            context.CompletionOptions,
+            cancellationToken);
+    }
+    private async Task ExecuteToolCallsAsync(
+    ChatCompletionResult completion,
+    AgentContext context,
+    CancellationToken cancellationToken)
+    {
+        foreach (ToolCallResult toolCall in completion.ToolCalls)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (string.IsNullOrWhiteSpace(toolCall.Id))
+            {
+                throw new InvalidOperationException(
+                    "Tool call ID cannot be empty.");
+            }
 
-            usedTools.Add(toolCall.FunctionName);
+            if (string.IsNullOrWhiteSpace(toolCall.Name))
+            {
+                throw new InvalidOperationException(
+                    "Tool call name cannot be empty.");
+            }
 
-            var toolResult = await ExecuteToolSafelyAsync(
-                toolCall.FunctionName,
-                toolCall.FunctionArguments,
+            string toolResult = await ExecuteToolAsync(
+                toolCall.Name,
+                toolCall.Arguments,
                 cancellationToken);
 
-            messages.Add(
+            toolResult ??= string.Empty;
+
+            context.Messages.Add(
                 new ToolChatMessage(
                     toolCall.Id,
                     toolResult));
+
+            context.UsedTools.Add(toolCall.Name);
         }
     }
 
-    private async Task<string> ExecuteToolSafelyAsync(
+    private async Task<string> ExecuteToolAsync(
         string toolName,
         BinaryData functionArguments,
         CancellationToken cancellationToken)
@@ -127,7 +156,7 @@ public sealed class AgentRuntime(
         try
         {
             logger.LogInformation(
-                "Executing agent tool {ToolName}.",
+                "Executing tool {ToolName}.",
                 toolName);
 
             return await toolExecutor.ExecuteAsync(
@@ -155,18 +184,48 @@ public sealed class AgentRuntime(
         }
     }
 
-    private static string GetAssistantText(
-        ChatCompletion completion)
+    private static AgentRunResult BuildResult(
+        ChatCompletionResult completion,
+        AgentContext context)
     {
-        var text = string.Join(
-            Environment.NewLine,
-            completion.Content
-                .Select(part => part.Text)
-                .Where(textPart =>
-                    !string.IsNullOrWhiteSpace(textPart)));
+        return new AgentRunResult
+        {
+            AssistantMessage = GetAssistantMessage(completion),
 
-        return string.IsNullOrWhiteSpace(text)
-            ? "The agent completed the request but returned no textual response."
-            : text;
+            UsedTools = context.UsedTools
+                .Distinct(StringComparer.Ordinal)
+                .ToArray()
+        };
+    }
+
+    private static string GetAssistantMessage(
+        ChatCompletionResult completion)
+    {
+        return string.IsNullOrWhiteSpace(completion.AssistantMessage)
+            ? EmptyAssistantResponse
+            : completion.AssistantMessage;
+    }
+
+    
+    private sealed class AgentContext(
+        ICollection<ChatMessage> messages,
+        ChatCompletionOptions completionOptions,
+        int maxRounds)
+    {
+        public ICollection<ChatMessage> Messages { get; } = messages;
+
+        public ChatCompletionOptions CompletionOptions { get; }
+            = completionOptions;
+
+        public List<string> UsedTools { get; } = [];
+
+        public int CurrentRound { get; private set; }
+
+        public int MaxRounds { get; } = maxRounds;
+        public void NextRound()
+        {
+            CurrentRound++;
+        }
+        
     }
 }

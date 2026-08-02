@@ -17,7 +17,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="OpenAI\" />
-  </ItemGroup>
 </Project>

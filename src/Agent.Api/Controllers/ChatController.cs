@@ -1,6 +1,5 @@
 using Agent.Api.Chat;
 using Agent.Api.Contracts;
-using Agent.Api.Features.Chat;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Agent.Api.Controllers;

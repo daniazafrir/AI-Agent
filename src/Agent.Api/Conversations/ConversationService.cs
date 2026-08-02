@@ -1,5 +1,4 @@
-﻿using Agent.Api.Features.Chat;
-using OpenAI.Chat;
+﻿using OpenAI.Chat;
 
 namespace Agent.Api.Features.Conversation;
 

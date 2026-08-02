@@ -1,4 +1,4 @@
-namespace Agent.Api.Services;
+namespace Agent.Api.Configuration;
 
 public sealed class CorsOptions
 {

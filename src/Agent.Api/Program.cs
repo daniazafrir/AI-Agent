@@ -4,7 +4,7 @@ using Agent.Api.Conversations;
 using Agent.Api.Features.Conversation;
 using Agent.Api.Infrastructure.Persistence;
 using Agent.Api.Mcp;
-using Agent.Api.Services;
+using Agent.Api.OpenAI;
 using Agent.Api.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -128,6 +128,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IChatOrchestrator,
     ChatOrchestrator>();
+
+builder.Services.AddScoped
+    <IChatCompletionService,
+    OpenAiChatCompletionService>();
 
 var app = builder.Build();
 

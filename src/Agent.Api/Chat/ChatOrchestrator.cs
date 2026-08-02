@@ -36,7 +36,7 @@ public sealed class ChatOrchestrator(
                 _agentOptions.SystemPrompt,
                 cancellationToken);
 
-        var agentResult =
+        var agentRunResult =
             await agentRuntime.RunAsync(
                 messages,
                 cancellationToken);
@@ -44,7 +44,7 @@ public sealed class ChatOrchestrator(
         await conversationService.SaveConversationAsync(
             conversationId,
             request.Message,
-            agentResult.AssistantMessage,
+            agentRunResult.AssistantMessage,
             cancellationToken);
 
         logger.LogInformation(
@@ -54,8 +54,8 @@ public sealed class ChatOrchestrator(
         return new Contracts.ChatResponse
         {
             ConversationId = conversationId,
-            Answer = agentResult.AssistantMessage,
-            UsedTools = agentResult.UsedTools
+            Answer = agentRunResult.AssistantMessage,
+            UsedTools = agentRunResult.UsedTools
         };
     }
 
