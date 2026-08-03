@@ -28,5 +28,15 @@ jobs:
       - name: Build solution
         run: dotnet build AgentAssistant.sln --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test AgentAssistant.sln --configuration Release --no-build --verbosity normal
+      - name: Run tests with coverage
+        run: >
+          dotnet test AgentAssistant.sln
+          --configuration Release
+          --no-build
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage
+          path: "**/TestResults/**/coverage.cobertura.xml"
