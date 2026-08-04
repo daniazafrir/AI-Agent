@@ -40,36 +40,36 @@ services:
 
 
   agent-api:
-    container_name: agent-api
-    restart: unless-stopped
+      container_name: agent-api
+      restart: unless-stopped
 
-    build:
-      context: ./src/Agent.Api
-      dockerfile: ./Dockerfile
+      build:
+        context: .
+        dockerfile: Dockerfile
 
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
+      environment:
+        ASPNETCORE_ENVIRONMENT: Development
+        ASPNETCORE_URLS: http://+:8080
 
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+        OPENAI_API_KEY: ${OPENAI_API_KEY}
 
-      ConnectionStrings__AgentDatabase: >
-        Host=postgres;
-        Port=5432;
-        Database=agent_db;
-        Username=postgres;
-        Password=${POSTGRES_PASSWORD:-postgres}
+        ConnectionStrings__AgentDatabase: >
+          Host=postgres;
+          Port=5432;
+          Database=agent_db;
+          Username=postgres;
+          Password=${POSTGRES_PASSWORD:-postgres}
 
-      Mcp__ServerUrl: http://host.docker.internal:5100/mcp
+        Mcp__BaseUrl: http://host.docker.internal:5100
 
-      AllowedOrigins__0: http://localhost:4200
+        AllowedOrigins__0: http://localhost:4200
 
-    ports:
-      - "5001:8080"
+      ports:
+        - "5000:8080"
 
-    depends_on:
-      postgres:
-        condition: service_healthy
+      depends_on:
+        postgres:
+          condition: service_healthy
 
 
 volumes:

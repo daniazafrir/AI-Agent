@@ -9,6 +9,9 @@ using Agent.Api.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using OpenAI.Chat;
+using Agent.Api.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -133,6 +136,27 @@ builder.Services.AddScoped
     <IChatCompletionService,
     OpenAiChatCompletionService>();
 
+builder.Services
+    .AddHealthChecks()
+
+    .AddCheck(
+        "self",
+        () => HealthCheckResult.Healthy(
+            "Agent API is running."),
+        tags: ["live"])
+
+    .AddCheck<PostgresHealthCheck>(
+        "postgres",
+        tags: ["ready"])
+
+    .AddCheck<McpHealthCheck>(
+        "mcp",
+        tags: ["ready"])
+
+    .AddCheck<OpenAiConfigurationHealthCheck>(
+        "openai-configuration",
+        tags: ["ready"]);
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -144,5 +168,34 @@ if (app.Environment.IsDevelopment())
 app.UseCors();
 app.UseHttpsRedirection();
 app.MapControllers();
+
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = registration =>
+            registration.Tags.Contains("live")
+    });
+
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = registration =>
+            registration.Tags.Contains("ready"),
+
+        ResponseWriter =
+            HealthCheckResponseWriter.WriteAsync
+    });
+
+app.MapHealthChecks(
+    "/health",
+    new HealthCheckOptions
+    {
+        Predicate = _ => true,
+
+        ResponseWriter =
+            HealthCheckResponseWriter.WriteAsync
+    });
 
 app.Run();

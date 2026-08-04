@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/TestResults/
+
+.git/
+.github/
+.vs/
+.vscode/
+
+*.user
+*.suo
+*.slnLaunch.user
+
+.env
+appsettings.Development.json
