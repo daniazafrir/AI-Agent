@@ -188,3 +188,14 @@ flowchart LR
     Docs --> Q
     Know --> Q
 ```
+## Chat Flow
+
+See:
+
+- docs/diagrams/chat-sequence.md
+
+## RAG Flow
+
+See:
+
+- docs/diagrams/rag-flow.md
