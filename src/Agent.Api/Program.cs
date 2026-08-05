@@ -1,17 +1,19 @@
 using Agent.Api.Chat;
 using Agent.Api.Configuration;
+using Agent.Api.Configuration.Validators;
 using Agent.Api.Conversations;
 using Agent.Api.Features.Conversation;
+using Agent.Api.HealthChecks;
 using Agent.Api.Infrastructure.Persistence;
 using Agent.Api.Mcp;
 using Agent.Api.OpenAI;
 using Agent.Api.Tools;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using OpenAI.Chat;
-using Agent.Api.HealthChecks;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,9 +33,17 @@ builder.Services.Configure<AgentOptions>(
     builder.Configuration.GetSection(
         AgentOptions.SectionName));
 
-builder.Services.Configure<OpenAiOptions>(
-    builder.Configuration.GetSection(
-        OpenAiOptions.SectionName));
+builder.Services
+    .AddOptions<OpenAiOptions>()
+    .Bind(
+        builder.Configuration.GetSection(
+            OpenAiOptions.SectionName))
+    .ValidateDataAnnotations()
+    .Validate(
+        options =>
+            !string.IsNullOrWhiteSpace(options.Model),
+        "OpenAI model is required.")
+    .ValidateOnStart();
 
 builder.Services.Configure<McpOptions>(
     builder.Configuration.GetSection(
@@ -81,28 +91,18 @@ builder.Services.AddSingleton<ChatClient>(
     serviceProvider =>
     {
         var options = serviceProvider
-            .GetRequiredService<
-                Microsoft.Extensions.Options
-                    .IOptions<OpenAiOptions>>()
+            .GetRequiredService<IOptions<OpenAiOptions>>()
             .Value;
-
-        var apiKey =
-            !string.IsNullOrWhiteSpace(options.ApiKey)
-                ? options.ApiKey
-                : Environment.GetEnvironmentVariable(
-                    "OPENAI_API_KEY");
-
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            throw new InvalidOperationException(
-                "OpenAI API key is missing. " +
-                "Configure OpenAI:ApiKey or OPENAI_API_KEY.");
-        }
 
         return new ChatClient(
             options.Model,
-            apiKey);
+            options.ApiKey);
     });
+
+builder.Services.AddSingleton<
+    IValidateOptions<OpenAiOptions>,
+    OpenAiOptionsValidator>();
+
 
 builder.Services.AddScoped<
     IConversationStore,

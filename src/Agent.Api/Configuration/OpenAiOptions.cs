@@ -1,13 +1,16 @@
-﻿namespace Agent.Api.Configuration;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Agent.Api.Configuration;
 
 public sealed class OpenAiOptions
 {
     public const string SectionName = "OpenAI";
 
-    public string ApiKey { get; init; } = string.Empty;
+    [Required]
+    public string Model { get; init; } = string.Empty;
 
-    public string Model { get; init; } =
-        "gpt-4.1-mini";
+    public string? ApiKey { get; init; } = string.Empty;
 
+    [Range(1, 10)]
     public int MaxToolRounds { get; init; } = 5;
 }

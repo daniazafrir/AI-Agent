@@ -1,96 +1,190 @@
-# Agent Personal Assistant — Step 03: Tool Calling
+# AI Agent with MCP + RAG
 
-This step turns the chat application into a basic agent. The model can decide to call local tools, the API executes each requested tool, sends the result back to the model, and repeats until a final answer is produced.
+A production-ready AI Agent built with **ASP.NET Core**, **OpenAI**, **Model Context Protocol (MCP)**, **PostgreSQL**, and **Qdrant**.
 
-## Included tools
+The project demonstrates how to build a modern AI application that supports tool calling, retrieval augmented generation (RAG), persistent conversations, and production-ready infrastructure.
 
-- `get_current_time` — current time in an IANA time zone.
-- `calculate` — safe arithmetic parser supporting `+`, `-`, `*`, `/`, and parentheses.
-- `search_knowledge` — mock RAG search. It deliberately reports that no documents are indexed yet.
-- `create_calendar_event_preview` — creates a preview only; no calendar data is saved.
+---
 
-## Flow
+## Features
+
+- 🤖 OpenAI Chat Completion
+- 🔧 Model Context Protocol (MCP)
+- 🛠 Dynamic Tool Discovery & Execution
+- 💬 Conversation Persistence
+- 🧠 Retrieval Augmented Generation (RAG)
+- 🗄 PostgreSQL Conversation Storage
+- 📚 Qdrant Vector Database
+- ❤️ Health Checks
+- ⚙️ Configuration Validation
+- 🐳 Docker & Docker Compose
+- 🧪 Unit Tests
+- 🚀 GitHub Actions CI
+
+---
+
+## Technology Stack
+
+| Technology | Purpose |
+|------------|---------|
+| .NET 8 | Backend |
+| ASP.NET Core | Web API |
+| OpenAI SDK | LLM |
+| MCP | Tool Calling |
+| Entity Framework Core | ORM |
+| PostgreSQL | Conversation Storage |
+| Qdrant | Vector Database |
+| Docker | Containers |
+| xUnit | Testing |
+| Moq | Mocking |
+| FluentAssertions | Assertions |
+
+---
+
+## Project Structure
 
 ```text
-User -> Agent.Api -> OpenAI
-                    |
-                    +-> tool call requested
-                        |
-                        +-> local ToolExecutor
-                            |
-                            +-> result returned to OpenAI
-                                |
-                                +-> final answer
+src
+│
+├── Agent.Api
+│   ├── Chat
+│   ├── Configuration
+│   ├── Conversations
+│   ├── HealthChecks
+│   ├── Mcp
+│   ├── OpenAI
+│   └── Tools
+│
+├── Mcp.Tools.Server
+│
+tests
+│
+└── Agent.Api.Tests
 ```
 
-The API limits execution to five tool-calling rounds to prevent an accidental infinite loop.
+---
 
-## Requirements
-
-- .NET 8 SDK
-- OpenAI API key
-
-## Configure the API key
-
-From `src/Agent.Api`:
-
-```bash
-dotnet user-secrets set "OpenAI:ApiKey" "YOUR_KEY"
-```
-
-Alternatively, set the environment variable:
-
-```bash
-OPENAI_API_KEY=YOUR_KEY
-```
-
-Do not commit a real API key to `appsettings.json`.
-
-## Run
+## Running locally
 
 ```bash
 dotnet restore
+
+dotnet build
+
+dotnet test
+
 dotnet run --project src/Agent.Api
 ```
 
-Open Swagger at the URL printed by ASP.NET, usually:
+---
 
-```text
-http://localhost:5000/swagger
+## Running with Docker
+
+```bash
+docker compose up -d --build
 ```
 
-## Request example
+---
 
-```json
-{
-  "message": "What is (542 * 83) / 2?",
-  "conversationId": null
-}
+## Health Checks
+
+| Endpoint | Purpose |
+|----------|---------|
+| `/health` | Complete system health |
+| `/health/live` | Liveness |
+| `/health/ready` | Readiness |
+
+---
+
+## CI
+
+GitHub Actions automatically performs:
+
+- Restore
+- Build
+- Unit Tests
+- Code Coverage
+
+---
+
+## Future Improvements
+
+- Angular Client
+- Authentication
+- Authorization
+- Streaming Responses
+- Kubernetes
+- Azure OpenAI
+- Semantic Kernel
+
+---
+
+## License
+
+MIT
+
+               +------------------+
+               |    Angular UI    |
+               +--------+---------+
+                        |
+                        v
+               +------------------+
+               |    Agent.Api     |
+               +--------+---------+
+                        |
+        +---------------+----------------+
+        |               |                |
+        v               v                v
++---------------+ +-------------+ +---------------+
+|    OpenAI     | | PostgreSQL  | |  MCP Server   |
++---------------+ +-------------+ +-------+-------+
+                                          |
+                         +----------------+----------------+
+                         |                |                |
+                         v                v                v
+                  Calculator         Documents       Knowledge
+                                          |
+                                          v
+                                     Qdrant Vector DB
+
+## Architecture
+
+```mermaid
+flowchart LR
+
+    User["User / Client"]
+
+    API["Agent.Api"]
+
+    OpenAI["OpenAI"]
+
+    MCP["MCP Server"]
+
+    PG["PostgreSQL"]
+
+    Q["Qdrant"]
+
+    Calc["Calculator Tool"]
+
+    Time["Time Tool"]
+
+    Docs["Document Tool"]
+
+    Know["Knowledge Tool"]
+
+    User --> API
+
+    API --> OpenAI
+
+    API --> PG
+
+    API --> MCP
+
+    MCP --> Calc
+    MCP --> Time
+    MCP --> Docs
+    MCP --> Know
+
+    Docs --> Q
+    Know --> Q
 ```
-
-Expected response shape:
-
-```json
-{
-  "conversationId": "...",
-  "answer": "...",
-  "usedTools": ["calculate"],
-  "createdAt": "..."
-}
-```
-
-Other prompts to test:
-
-```text
-What time is it in Asia/Jerusalem?
-Search our internal documents for the vacation policy.
-Prepare a 45-minute calendar-event preview for tomorrow at 10:00 titled Architecture review.
-```
-
-## Important limitation
-
-Step 03 has no chat-history persistence, real RAG, MCP, or Google Calendar integration. The knowledge and calendar tools are intentional placeholders that demonstrate tool calling safely.
-
-## Next step
-
-Step 04 will extract the tools into a separate MCP server and make `Agent.Api` an MCP client.
