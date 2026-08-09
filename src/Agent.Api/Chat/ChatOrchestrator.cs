@@ -2,6 +2,8 @@
 using Agent.Api.Contracts;
 using Agent.Api.Features.Conversation;
 using Microsoft.Extensions.Options;
+using Serilog.Context;
+using System.Diagnostics;
 
 namespace Agent.Api.Chat;
 
@@ -18,45 +20,67 @@ public sealed class ChatOrchestrator(
         Contracts.ChatRequest request,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        var stopwatch = Stopwatch.StartNew();
 
-        ValidateRequest(request);
+        try
+        {
+            ArgumentNullException.ThrowIfNull(request);
 
-        var conversationId = ResolveConversationId(
-            request.ConversationId);
+            ValidateRequest(request);
 
-        logger.LogInformation(
-            "Starting chat orchestration for conversation {ConversationId}.",
-            conversationId);
+            var conversationId = ResolveConversationId(
+                request.ConversationId);
 
-        var messages =
-            await conversationService.BuildMessagesAsync(
+            using (LogContext.PushProperty(
+                       "ConversationId",
+                       conversationId))
+            {
+                logger.LogInformation(
+                    "Starting chat orchestration.");
+            }
+
+                var messages =
+                await conversationService.BuildMessagesAsync(
+                    conversationId,
+                    request.Message,
+                    _agentOptions.SystemPrompt,
+                    cancellationToken);
+
+            var agentRunResult =
+                await agentRuntime.RunAsync(
+                    messages,
+                    cancellationToken);
+
+            await conversationService.SaveConversationAsync(
                 conversationId,
                 request.Message,
-                _agentOptions.SystemPrompt,
+                agentRunResult.AssistantMessage,
                 cancellationToken);
 
-        var agentRunResult =
-            await agentRuntime.RunAsync(
-                messages,
-                cancellationToken);
+            using (LogContext.PushProperty(
+                      "ConversationId",
+                      conversationId))
+            {
+                logger.LogInformation(
+                    "Completed chat orchestration for conversation.");
+            }
 
-        await conversationService.SaveConversationAsync(
-            conversationId,
-            request.Message,
-            agentRunResult.AssistantMessage,
-            cancellationToken);
 
-        logger.LogInformation(
-            "Completed chat orchestration for conversation {ConversationId}.",
-            conversationId);
-
-        return new Contracts.ChatResponse
+            return new Contracts.ChatResponse
+            {
+                ConversationId = conversationId,
+                Answer = agentRunResult.AssistantMessage,
+                UsedTools = agentRunResult.UsedTools
+            };
+        }
+        finally
         {
-            ConversationId = conversationId,
-            Answer = agentRunResult.AssistantMessage,
-            UsedTools = agentRunResult.UsedTools
-        };
+            stopwatch.Stop();
+
+            logger.LogInformation(
+                "Chat completed in {ElapsedMilliseconds} ms.",
+                stopwatch.ElapsedMilliseconds);
+        }
     }
 
     private static void ValidateRequest(Contracts.ChatRequest request)

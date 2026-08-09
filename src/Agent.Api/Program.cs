@@ -4,6 +4,7 @@ using Agent.Api.Configuration.Validators;
 using Agent.Api.Conversations;
 using Agent.Api.Features.Conversation;
 using Agent.Api.HealthChecks;
+using Agent.Api.Infrastructure.Middleware;
 using Agent.Api.Infrastructure.Persistence;
 using Agent.Api.Mcp;
 using Agent.Api.OpenAI;
@@ -14,8 +15,16 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using OpenAI.Chat;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog(
+    (context, configuration) =>
+    {
+        configuration.ReadFrom.Configuration(
+            context.Configuration);
+    });
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -159,6 +168,9 @@ builder.Services
 
 var app = builder.Build();
 
+app.UseCorrelationId();
+app.UseSerilogRequestLogging();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -166,7 +178,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.MapControllers();
 
 app.MapHealthChecks(

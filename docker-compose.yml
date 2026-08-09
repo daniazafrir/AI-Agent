@@ -49,7 +49,6 @@ services:
 
     environment:
       ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:8080
 
       OpenAI__ApiKey: ${OPENAI_API_KEY}
       OpenAI__Model: gpt-4.1-mini
