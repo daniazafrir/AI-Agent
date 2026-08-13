@@ -1,0 +1,159 @@
+:host {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+
+  margin-top: 12px;
+}
+
+.composer-shell {
+  position: relative;
+
+  width: 100%;
+  min-width: 0;
+
+  padding:
+    16px
+    76px
+    34px
+    18px;
+
+  border: 1px solid #4d6cf0;
+  border-radius: 18px;
+
+  background: var(--color-surface);
+
+  box-shadow:
+    0 5px 20px
+    rgba(79, 70, 229, 0.08);
+
+  box-sizing: border-box;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  &:focus-within {
+    border-color: #405ff0;
+
+    box-shadow:
+      0 7px 25px
+      rgba(79, 70, 229, 0.13);
+  }
+}
+
+textarea {
+  display: block;
+
+  width: 100%;
+  min-width: 0;
+
+  min-height: 54px;
+  max-height: 160px;
+
+  padding: 0;
+
+  border: 0;
+  outline: 0;
+
+  resize: none;
+
+  background: transparent;
+  color: var(--color-text);
+
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+
+  unicode-bidi: plaintext;
+  text-align: start;
+
+  &::placeholder {
+    color: #8b91a0;
+  }
+}
+
+.composer-actions {
+  position: absolute;
+
+  right: 14px;
+  bottom: 36px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.attach-button,
+.send-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 42px;
+  height: 42px;
+
+  border: 0;
+  border-radius: 12px;
+
+  cursor: pointer;
+}
+
+.attach-button {
+  position: absolute;
+
+  left: 14px;
+  bottom: 34px;
+
+  background: transparent;
+
+  color: var(--color-primary);
+}
+
+.send-button {
+  background:
+    linear-gradient(
+      135deg,
+      #4f6df0,
+      #3e5de4
+    );
+
+  color: white;
+
+  box-shadow:
+    0 4px 12px
+    rgba(79, 70, 229, 0.25);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.composer-hint {
+  position: absolute;
+
+  right: 18px;
+  bottom: 10px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.78rem;
+
+  direction: rtl;
+}
+
+@media (max-width: 600px) {
+  .composer-shell {
+    padding-right: 64px;
+  }
+
+  .composer-hint {
+    display: none;
+  }
+}

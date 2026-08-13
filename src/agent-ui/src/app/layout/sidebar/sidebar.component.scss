@@ -1,0 +1,65 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 24px 18px;
+  gap: 16px;
+  direction: ltr;
+}
+
+.logo {
+  padding: 0 8px 8px;
+}
+
+.logo h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.logo span {
+  color: var(--color-text-secondary);
+}
+
+.new-chat {
+  width: 100%;
+  min-height: 44px;
+}
+
+.section-title {
+  padding: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-text-secondary);
+}
+
+.conversation {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.status {
+  padding: 12px 8px 4px;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.new-chat {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.conversation.active {
+  background: var(--assistant);
+}

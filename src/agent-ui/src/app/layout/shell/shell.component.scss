@@ -1,0 +1,15 @@
+.shell {
+  height: 100vh;
+  background: var(--color-background);
+}
+
+mat-sidenav {
+  width: 300px;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+mat-sidenav-content {
+  min-height: 100vh;
+  background: var(--color-background);
+}

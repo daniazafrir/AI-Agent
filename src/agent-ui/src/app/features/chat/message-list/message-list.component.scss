@@ -1,0 +1,165 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  width: 100%;
+
+  padding: 28px 4px 20px;
+
+  box-sizing: border-box;
+
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  scroll-behavior: smooth;
+}
+
+.message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  width: 100%;
+}
+
+.user-row {
+  justify-content: flex-end;
+}
+
+.agent-row {
+  justify-content: flex-start;
+}
+
+.agent-avatar {
+  flex: 0 0 auto;
+
+  margin-top: 10px;
+
+  font-size: 1.45rem;
+}
+
+.bubble {
+  max-width: min(72%, 620px);
+
+  padding: 18px 22px;
+
+  border-radius: 20px;
+
+  line-height: 1.55;
+
+  box-sizing: border-box;
+
+  overflow-wrap: anywhere;
+}
+
+.user-bubble {
+  background:
+    linear-gradient(
+      135deg,
+      #4968ea,
+      #3e5ce4
+    );
+
+  color: white;
+
+  border-bottom-right-radius: 7px;
+}
+
+.agent-bubble {
+  background: var(--color-surface);
+  color: var(--color-text);
+
+  border: 1px solid var(--color-border);
+
+  border-bottom-left-radius: 7px;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-bottom: 10px;
+
+  font-size: 0.9rem;
+}
+
+.user-bubble .message-header {
+  justify-content: flex-end;
+}
+
+.message-content {
+  unicode-bidi: plaintext;
+
+  white-space: pre-wrap;
+
+  text-align: start;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  margin-top: 14px;
+}
+
+.tool {
+  padding: 5px 10px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+
+  background: #f8fafc;
+
+  color: var(--color-text);
+
+  font-size: 0.78rem;
+}
+
+.empty-state {
+  margin: auto;
+
+  padding: 60px 20px;
+
+  text-align: center;
+
+  color: var(--color-text-secondary);
+}
+
+.empty-icon {
+  font-size: 3.5rem;
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+
+  margin-top: 18px;
+
+  span {
+    padding: 8px 14px;
+
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+
+    background: var(--color-surface);
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble {
+    max-width: 90%;
+  }
+}

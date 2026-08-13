@@ -1,0 +1,43 @@
+<article
+  class="message"
+  [class.user-message]="message().role === 'user'">
+
+  <div class="message-meta">
+
+    <strong>
+      {{ message().role === 'user'
+        ? 'את'
+        : 'Agent'
+      }}
+    </strong>
+
+  </div>
+
+
+  <p>
+    {{ message().content }}
+  </p>
+
+
+  @if (message().usedTools?.length) {
+
+    <div
+      class="tool-list"
+      aria-label="Tools used">
+
+      @for (
+        tool of message().usedTools;
+        track tool
+      ) {
+
+        <span>
+          {{ tool }}
+        </span>
+
+      }
+
+    </div>
+
+  }
+
+</article>

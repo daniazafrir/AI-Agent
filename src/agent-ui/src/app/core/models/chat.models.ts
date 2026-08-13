@@ -7,16 +7,22 @@ export interface ChatResponse {
   conversationId: string;
   answer: string;
   usedTools: string[];
-  createdAt: string;
 }
 
 export type ChatRole = 'user' | 'assistant';
 
 export interface ChatMessage {
-  id: string;
-  role: ChatRole;
+  role: 'user' | 'assistant';
   content: string;
-  usedTools: string[];
-  createdAt: Date;
-  isError?: boolean;
+  usedTools?: string[];
+}
+
+export interface ConversationSummary {
+
+    id: string;
+
+    title: string;
+
+    lastUpdated: string;
+
 }

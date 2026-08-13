@@ -1,0 +1,79 @@
+<div class="sidebar">
+
+  <div class="logo">
+    <h2>🤖 Agent</h2>
+    <span>Assistant</span>
+  </div>
+
+  <button
+    mat-flat-button
+    color="primary"
+    class="new-chat"
+    (click)="newConversation()">
+
+    <mat-icon>add</mat-icon>
+
+    שיחה חדשה
+
+  </button>
+
+  <div class="section-title">
+    Conversations
+  </div>
+
+  <div class="conversations">
+
+    @if (loading()) {
+      <div class="loading">
+        Loading...
+      </div>
+    }
+
+    @if (error()) {
+      <div class="error">
+        {{ error() }}
+      </div>
+    }
+
+    @if (!loading() && conversations().length === 0) {
+      <div class="empty">
+        No conversations yet
+      </div>
+    }
+
+    @for (
+      conversation of conversations();
+      track conversation.id
+    ) {
+
+      <button
+        class="conversation"
+        [class.active]="
+          conversation.id ===
+          state.activeConversationId()
+        "
+        (click)="
+          openConversation(
+            conversation.id
+          )
+        ">
+
+        <mat-icon>
+          chat_bubble_outline
+        </mat-icon>
+
+        <span>
+          {{ conversation.title }}
+        </span>
+
+      </button>
+
+    }
+
+  </div>
+
+  <div class="footer">
+    🟢 Connected
+  </div>
+
+</div>

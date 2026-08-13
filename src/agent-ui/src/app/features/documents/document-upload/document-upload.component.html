@@ -1,0 +1,82 @@
+<section class="upload-card">
+
+  <div class="upload-header">
+    <div>
+      <h3>Knowledge Base</h3>
+
+      <p>
+        Upload a TXT document to the RAG knowledge base.
+      </p>
+    </div>
+
+    <mat-icon>
+      description
+    </mat-icon>
+  </div>
+
+  <label class="file-picker">
+
+    <mat-icon>
+      attach_file
+    </mat-icon>
+
+    <input
+      type="file"
+      accept=".txt,text/plain"
+      [disabled]="state.uploading()"
+      (change)="selectFile($event)">
+
+    <span>
+      {{
+        selectedFile()?.name
+        || 'בחר קובץ (.txt)'
+      }}
+    </span>
+
+  </label>
+
+  <div class="upload-actions">
+
+    <button
+      type="button"
+      class="upload-button"
+      [disabled]="
+        !selectedFile()
+        || state.uploading()
+      "
+      (click)="upload()">
+
+      <mat-icon>
+        upload
+      </mat-icon>
+
+      {{
+        state.uploading()
+        ? 'מעלה...'
+        : 'העלה'
+      }}
+
+    </button>
+
+  </div>
+
+  @if (state.uploading()) {
+    <mat-progress-bar
+      mode="determinate"
+      [value]="state.progress()">
+    </mat-progress-bar>
+  }
+
+  @if (state.success()) {
+    <p class="success-message">
+      {{ state.success() }}
+    </p>
+  }
+
+  @if (state.error()) {
+    <p class="error-message">
+      {{ state.error() }}
+    </p>
+  }
+
+</section>

@@ -1,0 +1,45 @@
+<div
+  class="composer-shell"
+  [class.focused]="message.value">
+
+  <textarea
+    rows="2"
+    dir="auto"
+    placeholder="שאל משהו..."
+    [formControl]="message"
+    (keydown)="onKeyDown($event)">
+  </textarea>
+
+  <div class="composer-actions">
+
+    <button
+      type="button"
+      class="attach-button"
+      aria-label="Attach document">
+
+      <mat-icon>
+        attach_file
+      </mat-icon>
+
+    </button>
+
+    <button
+      type="button"
+      class="send-button"
+      [disabled]="loading() || message.invalid"
+      (click)="submit()"
+      aria-label="Send">
+
+      <mat-icon>
+        send
+      </mat-icon>
+
+    </button>
+
+  </div>
+
+  <div class="composer-hint">
+    Enter לשליחה · Shift + Enter לשורה חדשה
+  </div>
+
+</div>

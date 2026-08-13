@@ -1,0 +1,45 @@
+<main class="chat-page">
+  <header class="chat-header">
+    <div>
+      <p class="eyebrow">AI AGENT</p>
+      <h1>Agent Assistant</h1>
+      <p class="subtitle">
+        Angular + .NET + OpenAI + MCP + RAG
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="new-chat-button"
+      (click)="clearConversation()"
+      [disabled]="state.isSending()">
+
+      שיחה חדשה
+    </button>
+  </header>
+
+  <app-document-upload />
+
+  <section class="conversation-area">
+    <app-message-list />
+
+    @if (state.isSending()) {
+      <div class="typing">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    }
+
+    @if (state.error()) {
+      <p class="error-status">
+        {{ state.error() }}
+      </p>
+    }
+  </section>
+
+  <app-composer
+    [loading]="state.isSending()"
+    (send)="sendMessage($event)">
+  </app-composer>
+</main>
