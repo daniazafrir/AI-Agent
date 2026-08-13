@@ -7,4 +7,8 @@ public interface IAgentRuntime
     Task<AgentRunResult> RunAsync(
         ICollection<ChatMessage> messages,
         CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<ChatStreamEvent> RunStreamingAsync(
+        ICollection<ChatMessage> messages,
+        CancellationToken cancellationToken = default);
 }

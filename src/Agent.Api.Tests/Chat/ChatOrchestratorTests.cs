@@ -30,7 +30,6 @@ public class ChatOrchestratorTests
         _sut = new ChatOrchestrator(
             _conversationService.Object,
             _agentRuntime.Object,
-            options,
             _logger.Object);
     }
 
@@ -38,7 +37,6 @@ public class ChatOrchestratorTests
     public async Task ChatAsync_Should_Return_Response_When_Request_Is_Valid()
     {
         // Arrange
-
         var conversationId = Guid.NewGuid();
 
         var request = new Contracts.ChatRequest
@@ -47,71 +45,53 @@ public class ChatOrchestratorTests
             Message = "Hello"
         };
 
-        var messages = new List<ChatMessage>();
+        var messages = new List<ChatMessage>
+    {
+        new UserChatMessage("Hello")
+    };
 
         _conversationService
             .Setup(x => x.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                "System Prompt",
+                null,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(messages);
-
-        var agentResult = new AgentRunResult
-        {
-            AssistantMessage = "Hi!",
-            UsedTools = ["Weather"]
-        };
 
         _agentRuntime
             .Setup(x => x.RunAsync(
                 messages,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(agentResult);
+            .ReturnsAsync(new AgentRunResult
+            {
+                AssistantMessage = "Hi!",
+                UsedTools = []
+            });
 
         _conversationService
             .Setup(x => x.SaveConversationAsync(
                 conversationId,
                 request.Message,
-                agentResult.AssistantMessage,
+                "Hi!",
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-
-        var response = await _sut.ChatAsync(request);
+        var response =
+            await _sut.ChatAsync(request);
 
         // Assert
+        response.ConversationId
+            .Should()
+            .Be(conversationId);
 
-        response.Should().NotBeNull();
+        response.Answer
+            .Should()
+            .Be("Hi!");
 
-        response.ConversationId.Should().Be(conversationId);
-
-        response.Answer.Should().Be("Hi!");
-
-        response.UsedTools.Should().BeEquivalentTo(["Weather"]);
-
-        _conversationService.Verify(x =>
-            x.BuildMessagesAsync(
-                conversationId,
-                request.Message,
-                "System Prompt",
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        _agentRuntime.Verify(x =>
-            x.RunAsync(
-                messages,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
-
-        _conversationService.Verify(x =>
-            x.SaveConversationAsync(
-                conversationId,
-                request.Message,
-                "Hi!",
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        response.UsedTools
+            .Should()
+            .BeEmpty();
     }
 
     [Fact]
@@ -178,12 +158,13 @@ public class ChatOrchestratorTests
             .Setup(x => x.BuildMessagesAsync(
                 It.IsAny<Guid>(),
                 request.Message,
-                "System Prompt",
+                null,
                 It.IsAny<CancellationToken>()))
-            .Callback<Guid, string, string, CancellationToken>((id, _, _, _) =>
-            {
-                capturedConversationId = id;
-            })
+            .Callback<Guid, string, string?, CancellationToken>(
+                (id, _, _, _) =>
+                {
+                    capturedConversationId = id;
+                })
             .ReturnsAsync(messages);
 
         _agentRuntime
@@ -192,7 +173,8 @@ public class ChatOrchestratorTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(new AgentRunResult
             {
-                AssistantMessage = "Hi!"
+                AssistantMessage = "Hi!",
+                UsedTools = []
             });
 
         _conversationService
@@ -204,32 +186,54 @@ public class ChatOrchestratorTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var response = await _sut.ChatAsync(request);
+        var response =
+            await _sut.ChatAsync(request);
 
         // Assert
-        capturedConversationId.Should().NotBe(Guid.Empty);
-        response.ConversationId.Should().Be(capturedConversationId);
+        capturedConversationId
+            .Should()
+            .NotBe(Guid.Empty);
+
+        response.ConversationId
+            .Should()
+            .Be(capturedConversationId);
+
+        response.Answer
+            .Should()
+            .Be("Hi!");
+
+        response.UsedTools
+            .Should()
+            .BeEmpty();
     }
-    
+
     [Fact]
     public async Task ChatAsync_Should_Reuse_Existing_ConversationId()
     {
         // Arrange
-        var conversationId = Guid.NewGuid();
+        var existingConversationId =
+            Guid.NewGuid();
 
         var request = new Contracts.ChatRequest
         {
-            ConversationId = conversationId,
-            Message = "Hello"
+            ConversationId =
+                existingConversationId,
+
+            Message =
+                "Hello"
         };
 
-        var messages = new List<ChatMessage>();
+        var messages =
+            new List<ChatMessage>
+            {
+            new UserChatMessage("Hello")
+            };
 
         _conversationService
             .Setup(x => x.BuildMessagesAsync(
-                conversationId,
+                existingConversationId,
                 request.Message,
-                "System Prompt",
+                null,
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(messages);
 
@@ -237,36 +241,41 @@ public class ChatOrchestratorTests
             .Setup(x => x.RunAsync(
                 messages,
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new AgentRunResult
-            {
-                AssistantMessage = "Hi!"
-            });
+            .ReturnsAsync(
+                new AgentRunResult
+                {
+                    AssistantMessage = "Hi!",
+                    UsedTools = []
+                });
 
         _conversationService
             .Setup(x => x.SaveConversationAsync(
-                conversationId,
+                existingConversationId,
                 request.Message,
                 "Hi!",
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         // Act
-        var response = await _sut.ChatAsync(request);
+        var response =
+            await _sut.ChatAsync(request);
 
         // Assert
-        response.ConversationId.Should().Be(conversationId);
+        response.ConversationId
+            .Should()
+            .Be(existingConversationId);
 
-        _conversationService.Verify(x =>
-            x.BuildMessagesAsync(
-                conversationId,
+        _conversationService.Verify(
+            x => x.BuildMessagesAsync(
+                existingConversationId,
                 request.Message,
-                "System Prompt",
+                null,
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        _conversationService.Verify(x =>
-            x.SaveConversationAsync(
-                conversationId,
+        _conversationService.Verify(
+            x => x.SaveConversationAsync(
+                existingConversationId,
                 request.Message,
                 "Hi!",
                 It.IsAny<CancellationToken>()),

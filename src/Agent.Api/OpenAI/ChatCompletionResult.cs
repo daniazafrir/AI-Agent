@@ -1,13 +1,15 @@
-﻿using OpenAI.Chat;
-
-namespace Agent.Api.OpenAI;
+﻿using Agent.Api.OpenAI;
+using OpenAI.Chat;
 
 public sealed class ChatCompletionResult
 {
     public ChatFinishReason FinishReason { get; init; }
 
-    public string AssistantMessage { get; init; } = string.Empty;
+    public string? AssistantMessage { get; init; }
 
-    public IReadOnlyList<ToolCallResult> ToolCalls { get; init; } =
-        Array.Empty<ToolCallResult>();
+    public IReadOnlyList<ToolCallResult> ToolCalls { get; init; }
+        = [];
+
+    public ChatCompletion RawCompletion { get; init; }
+        = null!;
 }

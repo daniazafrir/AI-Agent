@@ -7,6 +7,7 @@ namespace Agent.Api.Mcp;
 
 public sealed class McpToolClient(
     IOptions<McpOptions> options,
+    IHttpClientFactory httpClientFactory,
     ILoggerFactory loggerFactory,
     ILogger<McpToolClient> logger)
     : IMcpToolClient
@@ -80,14 +81,20 @@ public sealed class McpToolClient(
     private async Task<McpClient> CreateClientAsync(
         CancellationToken cancellationToken)
     {
-        var transport = new HttpClientTransport(
-            new HttpClientTransportOptions
-            {
-                Endpoint = new Uri(_options.ServerUrl),
-                TransportMode = HttpTransportMode.StreamableHttp,
-                ConnectionTimeout = _options.ConnectionTimeout
-            },
-            loggerFactory);
+        var httpClient =
+            httpClientFactory.CreateClient("Mcp");
+
+        var transport =
+            new HttpClientTransport(
+                new HttpClientTransportOptions
+                {
+                    Endpoint = new Uri(_options.ServerUrl),
+                    TransportMode =
+                        HttpTransportMode.StreamableHttp,
+                    ConnectionTimeout =
+                        _options.ConnectionTimeout
+                },
+                httpClient);
 
         return await McpClient.CreateAsync(
             transport,

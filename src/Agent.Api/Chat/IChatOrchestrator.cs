@@ -7,4 +7,8 @@ public interface IChatOrchestrator
     Task<ChatResponse> ChatAsync(
         ChatRequest request,
         CancellationToken cancellationToken = default);
+
+    IAsyncEnumerable<ChatStreamEvent> ChatStreamingAsync(
+        ChatRequest request,
+        CancellationToken cancellationToken = default);
 }

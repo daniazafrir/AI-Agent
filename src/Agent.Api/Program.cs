@@ -4,6 +4,7 @@ using Agent.Api.Configuration.Validators;
 using Agent.Api.Conversations;
 using Agent.Api.Features.Conversation;
 using Agent.Api.HealthChecks;
+using Agent.Api.Infrastructure.Exceptions;
 using Agent.Api.Infrastructure.Middleware;
 using Agent.Api.Infrastructure.Persistence;
 using Agent.Api.Mcp;
@@ -12,6 +13,7 @@ using Agent.Api.Tools;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using OpenAI.Chat;
@@ -116,10 +118,20 @@ builder.Services.AddSingleton<
 builder.Services.AddScoped<
     IConversationStore,
     PostgresConversationStore>();
+builder.Services
+    .AddHttpClient("Mcp")
+    .AddStandardResilienceHandler(options =>
+    {
+        options.Retry.DisableForUnsafeHttpMethods();
+    });
 
 builder.Services.AddSingleton<
     IMcpToolClient,
     McpToolClient>();
+
+builder.Services.AddSingleton<
+    IMcpToolRegistry,
+    McpToolRegistry>();
 
 builder.Services.AddSingleton<
     IMcpToolRegistry,
@@ -145,6 +157,14 @@ builder.Services.AddScoped
     <IChatCompletionService,
     OpenAiChatCompletionService>();
 
+builder.Services.AddScoped<
+    IToolProcessor,
+    ToolProcessor>();
+
+builder.Services.AddScoped<
+    IAgentLoop,
+    AgentLoop>();
+
 builder.Services
     .AddHealthChecks()
 
@@ -166,9 +186,17 @@ builder.Services
         "openai-configuration",
         tags: ["ready"]);
 
+builder.Services.AddExceptionHandler<
+    GlobalExceptionHandler>();
+
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 app.UseCorrelationId();
+
+app.UseExceptionHandler();
+
 app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())

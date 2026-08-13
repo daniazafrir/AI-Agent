@@ -18,26 +18,42 @@ builder.Services.Configure<QdrantOptions>(
 // OpenAI Embeddings
 //
 
-builder.Services.AddSingleton<EmbeddingClient>(serviceProvider =>
-{
-    var configuration =
-        serviceProvider.GetRequiredService<IConfiguration>();
+builder.Services.AddSingleton<EmbeddingClient>(
+    serviceProvider =>
+    {
+        var configuration =
+            serviceProvider
+                .GetRequiredService<IConfiguration>();
 
-    var apiKey =
-        configuration["OpenAI:ApiKey"]
-        ?? Environment.GetEnvironmentVariable("OPENAI_API_KEY")
-        ?? throw new InvalidOperationException(
-            "OpenAI API key is missing. Configure OpenAI:ApiKey or OPENAI_API_KEY.");
+        var configuredApiKey =
+            configuration["OpenAI:ApiKey"];
 
-    var embeddingModel =
-        configuration["OpenAI:EmbeddingModel"]
-        ?? "text-embedding-3-small";
+        var apiKey =
+            !string.IsNullOrWhiteSpace(configuredApiKey)
+                ? configuredApiKey
+                : Environment.GetEnvironmentVariable(
+                    "OPENAI_API_KEY");
 
-    return new EmbeddingClient(
-        embeddingModel,
-        apiKey);
-});
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException(
+                "OpenAI API key is missing. " +
+                "Configure OpenAI:ApiKey or OPENAI_API_KEY.");
+        }
 
+        var embeddingModel =
+            configuration["OpenAI:EmbeddingModel"];
+
+        if (string.IsNullOrWhiteSpace(embeddingModel))
+        {
+            embeddingModel =
+                "text-embedding-3-small";
+        }
+
+        return new EmbeddingClient(
+            embeddingModel,
+            apiKey);
+    });
 builder.Services.AddSingleton<
     IEmbeddingService,
     OpenAiEmbeddingService>();

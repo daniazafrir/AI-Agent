@@ -7,9 +7,9 @@ public sealed class OpenAiChatCompletionService(
     : IChatCompletionService
 {
     public async Task<ChatCompletionResult> CompleteAsync(
-        ICollection<ChatMessage> messages,
-        ChatCompletionOptions options,
-        CancellationToken cancellationToken)
+    ICollection<ChatMessage> messages,
+    ChatCompletionOptions options,
+    CancellationToken cancellationToken)
     {
         ChatCompletion completion =
             await chatClient.CompleteChatAsync(
@@ -21,19 +21,27 @@ public sealed class OpenAiChatCompletionService(
         {
             FinishReason = completion.FinishReason,
 
-            AssistantMessage = GetAssistantMessage(completion),
+            AssistantMessage =
+                string.Join(
+                    Environment.NewLine,
+                    completion.Content
+                        .Select(x => x.Text)
+                        .Where(x =>
+                            !string.IsNullOrWhiteSpace(x))),
 
             ToolCalls = completion.ToolCalls
-                .Select(toolCall => new ToolCallResult
-                {
-                    Id = toolCall.Id,
-                    Name = toolCall.FunctionName,
-                    Arguments = toolCall.FunctionArguments
-                })
-                .ToArray()
+    .Select(toolCall => new ToolCallResult
+    {
+        Id = toolCall.Id,
+        Name = toolCall.FunctionName,
+        Arguments = toolCall.FunctionArguments
+    })
+    
+                .ToList(),
+
+            RawCompletion = completion
         };
     }
-
     private static string GetAssistantMessage(
         ChatCompletion completion)
     {

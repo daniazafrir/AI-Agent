@@ -17,7 +17,11 @@ public sealed class CorrelationIdMiddleware(
                 ? headerValue.ToString()
                 : Guid.NewGuid().ToString("N");
 
-        context.Response.Headers[HeaderName] = correlationId;
+        context.Items[CorrelationIdMiddleware.HeaderName] =
+            correlationId;
+
+        context.Response.Headers[CorrelationIdMiddleware.HeaderName] =
+            correlationId;
 
         using (LogContext.PushProperty(
                    "CorrelationId",

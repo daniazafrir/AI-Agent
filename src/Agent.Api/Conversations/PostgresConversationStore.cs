@@ -99,4 +99,56 @@ public sealed class PostgresConversationStore(
         dbContext.Conversations.Remove(conversation);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<ConversationSummary>>
+    GetConversationsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var conversations =
+            await dbContext.Conversations
+                .AsNoTracking()
+                .OrderByDescending(x => x.UpdatedAtUtc)
+                .Select(conversation => new
+                {
+                    conversation.Id,
+                    conversation.UpdatedAtUtc,
+
+                    Title = dbContext.ConversationMessages
+                        .Where(message =>
+                            message.ConversationId == conversation.Id &&
+                            message.Role == "user")
+                        .OrderBy(message => message.CreatedAtUtc)
+                        .Select(message => message.Content)
+                        .FirstOrDefault()
+                })
+                .ToListAsync(cancellationToken);
+
+        return conversations
+            .Select(conversation =>
+                new ConversationSummary(
+                    conversation.Id,
+                    CreateConversationTitle(
+                        conversation.Title),
+                    new DateTimeOffset(
+                        conversation.UpdatedAtUtc,
+                        TimeSpan.Zero)))
+            .ToList();
+    }
+
+    private static string CreateConversationTitle(
+    string? firstUserMessage)
+    {
+        if (string.IsNullOrWhiteSpace(firstUserMessage))
+        {
+            return "New conversation";
+        }
+
+        const int maxLength = 50;
+
+        var title = firstUserMessage.Trim();
+
+        return title.Length <= maxLength
+            ? title
+            : $"{title[..maxLength]}...";
+    }
 }
