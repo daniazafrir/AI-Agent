@@ -1,0 +1,37 @@
+@for (
+    document of documents();
+    track document.id
+) {
+
+<div class="document">
+
+    <h4>
+        {{ document.fileName }}
+    </h4>
+
+    <div>
+        Chunks:
+        {{ document.chunkCount }}
+    </div>
+
+    <div>
+        {{ document.sizeBytes }}
+        bytes
+    </div>
+
+    <div>
+        {{ document.createdAtUtc | date }}
+    </div>
+
+    <button
+        mat-stroked-button
+        color="warn"
+        (click)="delete(document)">
+
+        Delete
+
+    </button>
+
+</div>
+
+}

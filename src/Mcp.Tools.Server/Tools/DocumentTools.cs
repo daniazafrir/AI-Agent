@@ -1,27 +1,33 @@
-using System.ComponentModel;
-using Mcp.Tools.Server.Features.Rag;
 using ModelContextProtocol.Server;
 
-namespace Mcp.Tools.Server.Tools;
+namespace Mcp.Tools.Server.Features.Rag;
 
 [McpServerToolType]
-public sealed class DocumentTools
+public static class RagTools
 {
     [McpServerTool(Name = "index_document")]
-    [Description(
-        "Indexes a plain-text document in the private knowledge base. " +
-        "The document is split into chunks, embedded, and stored in Qdrant.")]
     public static Task<DocumentIndexResult> IndexDocumentAsync(
         IRagService ragService,
-        [Description("Original file name, including the .txt extension.")]
+        Guid documentId,
         string fileName,
-        [Description("Complete UTF-8 plain-text content of the document.")]
-        string content,
+        IReadOnlyList<string> chunks,
         CancellationToken cancellationToken = default)
     {
         return ragService.IndexDocumentAsync(
+            documentId,
             fileName,
-            content,
+            chunks,
+            cancellationToken);
+    }
+
+    [McpServerTool(Name = "delete_vectors")]
+    public static Task<bool> DeleteVectorsAsync(
+        IRagService ragService,
+        Guid documentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ragService.DeleteVectorsAsync(
+            documentId,
             cancellationToken);
     }
 }

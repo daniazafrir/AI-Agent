@@ -22,14 +22,14 @@
 
     <input
       type="file"
-      accept=".txt,text/plain"
+      accept=".txt,.pdf,text/plain,application/pdf"
       [disabled]="state.uploading()"
       (change)="selectFile($event)">
 
     <span>
       {{
         selectedFile()?.name
-        || 'בחר קובץ (.txt)'
+        || 'Supported files: TXT, PDF · Max 2MB'
       }}
     </span>
 

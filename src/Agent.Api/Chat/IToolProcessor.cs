@@ -6,4 +6,9 @@ public interface IToolProcessor
         ChatCompletionResult completion,
         AgentContext context,
         CancellationToken cancellationToken);
+
+    IAsyncEnumerable<ChatStreamEvent> ProcessStreamingAsync(
+        ChatCompletionResult completion,
+        AgentContext context,
+        CancellationToken cancellationToken = default);
 }

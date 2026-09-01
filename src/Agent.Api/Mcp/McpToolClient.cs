@@ -52,10 +52,20 @@ public sealed class McpToolClient(
         await using var client =
             await CreateClientAsync(cancellationToken);
 
+        logger.LogInformation(
+    "Calling MCP tool {Tool} with arguments:\n{Arguments}",
+    toolName,
+    arguments.ToString());
+
         var result = await client.CallToolAsync(
             toolName,
             arguments,
             cancellationToken: cancellationToken);
+
+        logger.LogInformation(
+    "MCP tool {Tool} returned:\n{Result}",
+    toolName,
+    result);
 
         logger.LogInformation(
             "MCP tool {ToolName} completed. IsError: {IsError}.",

@@ -1,83 +1,123 @@
 <div
-  class="messages"
-  #scrollContainer
-  aria-live="polite">
+    class="messages"
+    #scrollContainer
+    aria-live="polite">
 
-  @for (
-    message of state.messages();
-    track $index
-  ) {
+    @for (
+        message of state.messages();
+        track $index
+    ) {
 
-    <article
-      class="message-row"
-      [class.user-row]="message.role === 'user'"
-      [class.agent-row]="message.role === 'assistant'">
+        <article
+            class="message-row"
+            [class.user-row]="message.role === 'user'"
+            [class.agent-row]="message.role === 'assistant'">
 
-      @if (message.role === 'assistant') {
-        <div class="agent-avatar">
-          🤖
-        </div>
-      }
-
-      <div
-        class="bubble"
-        [class.user-bubble]="message.role === 'user'"
-        [class.agent-bubble]="message.role === 'assistant'">
-
-        <div class="message-header">
-          <strong>
-            {{ message.role === 'user' ? 'אתה' : 'סוכן' }}
-          </strong>
-
-          @if (message.role === 'user') {
-            <span class="avatar-icon">
-              👤
-            </span>
-          }
-        </div>
-
-        <div
-          class="message-content"
-          dir="auto">
-          {{ message.content }}
-        </div>
-
-        @if (message.usedTools?.length) {
-          <div class="tools">
-            @for (
-              tool of message.usedTools;
-              track tool
-            ) {
-              <span class="tool">
-                {{ tool }}
-              </span>
+            @if (message.role === 'assistant') {
+                <div class="agent-avatar">
+                    🤖
+                </div>
             }
-          </div>
+
+            <div
+                class="bubble"
+                [class.user-bubble]="message.role === 'user'"
+                [class.agent-bubble]="message.role === 'assistant'">
+
+                <div class="message-header">
+                    <strong>
+                        {{ message.role === 'user' ? 'אתה' : 'סוכן' }}
+                    </strong>
+
+                    @if (message.role === 'user') {
+                        <span class="avatar-icon">
+                            👤
+                        </span>
+                    }
+                </div>
+
+                <div
+                    class="message-content"
+                    dir="auto">
+                    {{ message.content }}
+                </div>
+
+                @if (message.sources?.length) {
+    <div class="sources">
+
+        <div class="sources-title">
+            📚 מקורות
+        </div>
+
+        @for (
+            source of message.sources;
+            track source.documentName + source.chunkIndex
+        ) {
+            <button
+                type="button"
+                class="source source-button"
+                (click)="openSource(source)">
+
+                <span>
+                    📄 {{ source.documentName }}
+                </span>
+
+                <span class="source-meta">
+                    Chunk {{ source.chunkIndex }}
+                </span>
+
+            </button>
         }
 
-      </div>
-
-    </article>
-
-  }
-
-  @if (
-    state.messages().length === 0 &&
-    !state.isSending()
-  ) {
-    <div class="empty-state">
-      <div class="empty-icon">🤖</div>
-
-      <h2>How can I help today?</h2>
-
-      <p>Try asking:</p>
-
-      <div class="suggestions">
-        <span>What is MCP?</span>
-        <span>Search my documents</span>
-        <span>What tools do you have?</span>
-      </div>
     </div>
-  }
+}
+
+                @if (message.usedTools?.length) {
+                    <div class="tools">
+
+                        @for (
+                            tool of message.usedTools;
+                            track tool
+                        ) {
+                            <span class="tool">
+                                {{ tool }}
+                            </span>
+                        }
+
+                    </div>
+                }
+
+            </div>
+
+        </article>
+
+    }
+
+    @if (
+        state.messages().length === 0 &&
+        !state.isSending()
+    ) {
+        <div class="empty-state">
+
+            <div class="empty-icon">
+                🤖
+            </div>
+
+            <h2>
+                How can I help today?
+            </h2>
+
+            <p>
+                Try asking:
+            </p>
+
+            <div class="suggestions">
+                <span>What is MCP?</span>
+                <span>Search my documents</span>
+                <span>What tools do you have?</span>
+            </div>
+
+        </div>
+    }
 
 </div>

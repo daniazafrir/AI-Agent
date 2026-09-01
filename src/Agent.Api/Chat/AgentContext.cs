@@ -1,4 +1,5 @@
-﻿using OpenAI.Chat;
+﻿using Agent.Api.Features.Conversation;
+using OpenAI.Chat;
 
 namespace Agent.Api.Chat;
 
@@ -12,4 +13,6 @@ public sealed class AgentContext
     public List<string> UsedTools { get; } = [];
 
     public int Round { get; set; }
+
+    public List<KnowledgeSource> Sources { get; init; } = [];
 }

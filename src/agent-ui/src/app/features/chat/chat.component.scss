@@ -115,6 +115,68 @@
   color: var(--color-danger);
 }
 
+.tool-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+
+  width: fit-content;
+
+  margin: 10px 0 14px;
+  padding: 10px 14px;
+
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+
+  background: var(--color-surface);
+
+  color: var(--color-text-secondary);
+
+  font-size: 0.9rem;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.tool-status-spinner {
+  width: 14px;
+  height: 14px;
+
+  border: 2px solid #d9deea;
+  border-top-color: var(--color-primary);
+
+  border-radius: 50%;
+
+  animation: tool-spin 0.8s linear infinite;
+}
+
+.tool-status-icon {
+  font-size: 1rem;
+}
+
+.knowledge-section {
+  margin: 16px 24px 20px;
+  padding: 20px;
+
+  background: #fff;
+
+  border: 1px solid #e8eaf0;
+  border-radius: 16px;
+
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.knowledge-divider {
+  height: 1px;
+  margin: 18px 0;
+  background: #eceef3;
+}
+
+@keyframes tool-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @keyframes bounce {
   0%,
   80%,

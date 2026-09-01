@@ -18,7 +18,7 @@ public sealed class PostgresConversationStore(
             .AsNoTracking()
             .Where(x => x.ConversationId == conversationId)
             .OrderBy(x => x.CreatedAtUtc)
-            .ToListAsync(cancellationToken);
+            .ToListAsync(CancellationToken.None);
     }
 
     public async Task AddMessageAsync(

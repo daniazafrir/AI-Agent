@@ -8,4 +8,9 @@ public interface IChatCompletionService
         ICollection<ChatMessage> messages,
         ChatCompletionOptions options,
         CancellationToken cancellationToken);
+
+    IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(
+        ICollection<ChatMessage> messages,
+        ChatCompletionOptions options,
+        CancellationToken cancellationToken);
 }

@@ -10,35 +10,58 @@ public sealed class ConversationService(
     private const string AssistantRole = "assistant";
 
     public async Task<List<ChatMessage>> BuildMessagesAsync(
-        Guid conversationId,
-        string currentUserMessage,
-        string? systemPrompt,
-        CancellationToken cancellationToken = default)
+    Guid conversationId,
+    string currentUserMessage,
+    string? systemPrompt,
+    CancellationToken cancellationToken = default)
     {
-        var messages = new List<ChatMessage>();
+        if (string.IsNullOrWhiteSpace(currentUserMessage))
+        {
+            throw new ArgumentException(
+                "Current user message cannot be empty.",
+                nameof(currentUserMessage));
+        }
+
+        var messages =
+            new List<ChatMessage>();
 
         if (!string.IsNullOrWhiteSpace(systemPrompt))
         {
-            messages.Add(new SystemChatMessage(systemPrompt));
+            messages.Add(
+                new SystemChatMessage(
+                    systemPrompt.Trim()));
         }
 
-        var history = await conversationStore.GetMessagesAsync(
-            conversationId,
-            cancellationToken);
+        var history =
+            await conversationStore.GetMessagesAsync(
+                conversationId,
+                cancellationToken);
 
         foreach (var storedMessage in history)
         {
-            if (string.Equals(storedMessage.Role, UserRole, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(
+                    storedMessage.Role,
+                    UserRole,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                messages.Add(new UserChatMessage(storedMessage.Content));
+                messages.Add(
+                    new UserChatMessage(
+                        storedMessage.Content));
             }
-            else if (string.Equals(storedMessage.Role, AssistantRole, StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(
+                         storedMessage.Role,
+                         AssistantRole,
+                         StringComparison.OrdinalIgnoreCase))
             {
-                messages.Add(new AssistantChatMessage(storedMessage.Content));
+                messages.Add(
+                    new AssistantChatMessage(
+                        storedMessage.Content));
             }
         }
 
-        messages.Add(new UserChatMessage(currentUserMessage.Trim()));
+        messages.Add(
+            new UserChatMessage(
+                currentUserMessage.Trim()));
 
         return messages;
     }

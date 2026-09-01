@@ -1,5 +1,7 @@
-using System.Text.Json;
 using Agent.Api.Mcp;
+using Agent.Api.OpenAI;
+using System.Text;
+using System.Text.Json;
 
 namespace Agent.Api.Tools;
 
@@ -9,7 +11,7 @@ public sealed class ToolExecutor(
     ILogger<ToolExecutor> logger)
     : IToolExecutor
 {
-    public async Task<string> ExecuteAsync(
+    public async Task<ToolExecutionResult> ExecuteAsync(
         string toolName,
         BinaryData arguments,
         CancellationToken cancellationToken = default)
@@ -47,10 +49,22 @@ public sealed class ToolExecutor(
                 toolName,
                 parsedArguments);
 
-            return await mcpToolClient.CallToolAsync(
-                toolName,
-                parsedArguments,
-                cancellationToken);
+            var rawResult =
+     await mcpToolClient.CallToolAsync(
+         toolName,
+         parsedArguments,
+         cancellationToken);
+
+            var normalizedResult =
+                NormalizeToolResult(
+                    toolName,
+                    rawResult);
+
+            return new ToolExecutionResult
+            {
+                RawContent = rawResult,
+                Content = normalizedResult
+            };
         }
         catch (OperationCanceledException)
         {
@@ -148,16 +162,96 @@ public sealed class ToolExecutor(
         };
     }
 
-    private static string CreateError(
-        string? toolName,
-        string message)
+    private static ToolExecutionResult CreateError(
+    string? toolName,
+    string message)
     {
-        return JsonSerializer.Serialize(
-            new
-            {
-                success = false,
-                tool = toolName,
-                error = message
-            });
+        var errorJson =
+            JsonSerializer.Serialize(
+                new
+                {
+                    success = false,
+                    tool = toolName,
+                    error = message
+                });
+
+        return new ToolExecutionResult
+        {
+            RawContent = errorJson,
+            Content = errorJson
+        };
     }
+    private static string NormalizeToolResult(
+    string toolName,
+    string rawResult)
+    {
+        if (!string.Equals(
+                toolName,
+                "search_knowledge",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return rawResult;
+        }
+
+        try
+        {
+            using var document =
+                JsonDocument.Parse(rawResult);
+
+            if (!document.RootElement.TryGetProperty(
+                    "matches",
+                    out var matches) ||
+                matches.ValueKind != JsonValueKind.Array)
+            {
+                return rawResult;
+            }
+
+            var builder =
+                new StringBuilder();
+
+            foreach (var match in matches.EnumerateArray())
+            {
+                var documentName =
+                    match.TryGetProperty(
+                        "documentName",
+                        out var documentNameElement)
+                        ? documentNameElement.GetString()
+                        : null;
+
+                var content =
+                    match.TryGetProperty(
+                        "content",
+                        out var contentElement)
+                        ? contentElement.GetString()
+                        : null;
+
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(documentName))
+                {
+                    builder.AppendLine(
+                        $"Source: {documentName}");
+                }
+
+                builder.AppendLine(content);
+                builder.AppendLine();
+            }
+
+            var normalized =
+                builder.ToString().Trim();
+
+            return string.IsNullOrWhiteSpace(normalized)
+                ? rawResult
+                : normalized;
+        }
+        catch (JsonException)
+        {
+            return rawResult;
+        }
+    }
+
+
 }

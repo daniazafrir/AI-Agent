@@ -7,6 +7,9 @@ import {
   inject
 } from '@angular/core';
 import { ChatStateService } from '../chat-state.service';
+import { MatDialog } from '@angular/material/dialog';
+import { KnowledgeSource } from 'src/app/core/models/chat.models';
+import { SourcePreviewDialogComponent } from '../source-preview-dialog-component/source-preview-dialog-component';
 
 
 @Component({
@@ -18,7 +21,23 @@ import { ChatStateService } from '../chat-state.service';
 })
 export class MessageListComponent
   implements AfterViewChecked {
+  private readonly dialog =
+    inject(MatDialog);
 
+openSource(
+    source: KnowledgeSource
+): void {
+
+    this.dialog.open(
+        SourcePreviewDialogComponent,
+        {
+            width: '800px',
+            maxWidth: '95vw',
+            maxHeight: '80vh',
+            data: source
+        }
+    );
+}
   readonly state =
     inject(ChatStateService);
 

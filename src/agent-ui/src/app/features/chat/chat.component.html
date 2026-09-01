@@ -1,45 +1,63 @@
 <main class="chat-page">
-  <header class="chat-header">
-    <div>
-      <p class="eyebrow">AI AGENT</p>
-      <h1>Agent Assistant</h1>
-      <p class="subtitle">
-        Angular + .NET + OpenAI + MCP + RAG
-      </p>
-    </div>
+    <header class="chat-header">
+        <div>
+            <p class="eyebrow">AI AGENT</p>
+            <h1>Agent Assistant</h1>
+            <p class="subtitle">
+                Angular + .NET + OpenAI + MCP + RAG
+            </p>
+        </div>
 
-    <button
-      type="button"
-      class="new-chat-button"
-      (click)="clearConversation()"
-      [disabled]="state.isSending()">
+        <button type="button" class="new-chat-button" (click)="clearConversation()" [disabled]="state.isSending()">
 
-      שיחה חדשה
-    </button>
-  </header>
+            שיחה חדשה
+        </button>
+    </header>
 
-  <app-document-upload />
+    <section class="knowledge-section">
 
-  <section class="conversation-area">
-    <app-message-list />
+        <app-document-upload />
 
-    @if (state.isSending()) {
-      <div class="typing">
-        <span></span>
-        <span></span>
-        <span></span>
-      </div>
-    }
+        <div class="knowledge-divider"></div>
 
-    @if (state.error()) {
-      <p class="error-status">
-        {{ state.error() }}
-      </p>
-    }
-  </section>
+        <app-knowledge-base />
 
-  <app-composer
-    [loading]="state.isSending()"
-    (send)="sendMessage($event)">
-  </app-composer>
+    </section>
+
+
+  
+    <section class="conversation-area">
+        @if (state.activeTool()) {
+        <div class="tool-status">
+            <div class="tool-status-spinner"></div>
+
+            <span class="tool-status-icon">
+                {{ getToolIcon(state.activeTool()) }}
+            </span>
+
+            <span>
+                {{ getToolText(state.activeTool()) }}
+            </span>
+        </div>
+        }
+
+        <app-message-list />
+
+        @if (state.isSending()) {
+        <div class="typing">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        }
+
+        @if (state.error()) {
+        <p class="error-status">
+            {{ state.error() }}
+        </p>
+        }
+    </section>
+
+    <app-composer [loading]="state.isSending()" (send)="sendMessage($event)" (stop)="stopGeneration()">
+    </app-composer>
 </main>

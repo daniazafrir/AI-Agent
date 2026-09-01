@@ -1,4 +1,6 @@
-﻿namespace Agent.Api.Chat;
+﻿using Agent.Api.Features.Conversation;
+
+namespace Agent.Api.Chat;
 
 public sealed class AgentRunResult
 {
@@ -7,4 +9,6 @@ public sealed class AgentRunResult
 
     public IReadOnlyList<string> UsedTools { get; init; } =
         [];
+
+    public List<KnowledgeSource> Sources { get; init; } = [];
 }

@@ -1,15 +1,32 @@
 .shell {
   height: 100vh;
-  background: var(--color-background);
 }
 
 mat-sidenav {
-  width: 300px;
-  border-right: 1px solid var(--color-border);
-  background: var(--color-surface);
+  width: 320px;
 }
 
-mat-sidenav-content {
-  min-height: 100vh;
-  background: var(--color-background);
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-content app-conversation-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 8px 12px;
+}
+
+.sidebar-content app-knowledge-base {
+  flex: 0 0 auto;
+  max-height: 42%;
+  overflow: auto;
 }

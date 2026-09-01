@@ -70,7 +70,7 @@ public sealed class ToolExecutorTests
             arguments);
 
         // Assert
-        result.Should().Contain("\"success\": true");
+        result.Content.Should().Contain("\"success\": true");
 
         _toolRegistry.Verify(x =>
             x.InitializeAsync(
@@ -101,7 +101,7 @@ public sealed class ToolExecutorTests
             arguments);
 
         // Assert
-        using var document = JsonDocument.Parse(result);
+        using var document = JsonDocument.Parse(result.RawContent);
 
         document.RootElement
             .GetProperty("success")
@@ -144,7 +144,7 @@ public sealed class ToolExecutorTests
             BinaryData.FromString("{}"));
 
         // Assert
-        using var document = JsonDocument.Parse(result);
+        using var document = JsonDocument.Parse(result.RawContent);
 
         document.RootElement
             .GetProperty("success")
@@ -196,7 +196,7 @@ public sealed class ToolExecutorTests
             invalidArguments);
 
         // Assert
-        using var document = JsonDocument.Parse(result);
+        using var document = JsonDocument.Parse(result.RawContent);
 
         document.RootElement
             .GetProperty("success")
@@ -237,7 +237,7 @@ public sealed class ToolExecutorTests
             arrayArguments);
 
         // Assert
-        using var document = JsonDocument.Parse(result);
+        using var document = JsonDocument.Parse(result.Content);
 
         document.RootElement
             .GetProperty("success")
@@ -332,7 +332,7 @@ public sealed class ToolExecutorTests
                 """{"timeZone":"Asia/Jerusalem"}"""));
 
         // Assert
-        using var document = JsonDocument.Parse(result);
+        using var document = JsonDocument.Parse(result.Content);
 
         document.RootElement
             .GetProperty("success")

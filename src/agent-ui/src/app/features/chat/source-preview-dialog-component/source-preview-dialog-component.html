@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>
+  📄 {{ source.documentName }}
+</h2>
+
+<mat-dialog-content>
+
+  @if (loading) {
+    <p>Loading source...</p>
+  }
+
+  @if (chunk) {
+    <div class="chunk-meta">
+      Chunk {{ chunk.chunkIndex }}
+    </div>
+
+    <div
+      class="chunk-content"
+      dir="auto">
+      {{ chunk.content }}
+    </div>
+  }
+
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button
+    mat-button
+    mat-dialog-close>
+    Close
+  </button>
+</mat-dialog-actions>

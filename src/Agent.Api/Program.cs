@@ -3,10 +3,14 @@ using Agent.Api.Configuration;
 using Agent.Api.Configuration.Validators;
 using Agent.Api.Conversations;
 using Agent.Api.Features.Conversation;
+using Agent.Api.Features.Knowledge;
+using Agent.Api.Features.Knowledge.Chunking;
+using Agent.Api.Features.Knowledge.Extraction;
 using Agent.Api.HealthChecks;
 using Agent.Api.Infrastructure.Exceptions;
 using Agent.Api.Infrastructure.Middleware;
 using Agent.Api.Infrastructure.Persistence;
+using Agent.Api.Knowledge;
 using Agent.Api.Mcp;
 using Agent.Api.OpenAI;
 using Agent.Api.Tools;
@@ -164,6 +168,35 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IAgentLoop,
     AgentLoop>();
+
+builder.Services.AddSingleton<
+    IToolRouter,
+    ToolRouter>();
+
+builder.Services.AddScoped<
+    IKnowledgeDocumentRepository,
+    PostgresKnowledgeDocumentRepository>();
+
+builder.Services.AddScoped<
+    IKnowledgeDocumentService,
+    KnowledgeDocumentService>();
+
+builder.Services.AddScoped<
+    IKnowledgeChunkRepository,
+    PostgresKnowledgeChunkRepository>();
+
+builder.Services.AddSingleton<IChunkingService, ChunkingService>();
+
+builder.Services.AddSingleton<
+    IDocumentTextExtractor,
+    TxtDocumentTextExtractor>();
+
+builder.Services.AddSingleton<
+    IDocumentTextExtractor,
+    PdfDocumentTextExtractor>();
+
+builder.Services.AddSingleton<
+    DocumentTextExtractorFactory>();
 
 builder.Services
     .AddHealthChecks()

@@ -1,72 +1,26 @@
-using Mcp.Tools.Server.Features.Rag;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Mcp.Tools.Server.Features.Rag;
 
 public sealed class RagService(
     ITextExtractionService textExtractionService,
-    IChunkingService chunkingService,
     IEmbeddingService embeddingService,
     IVectorStore vectorStore,
-    IRagDocumentStore documentStore,
     ILogger<RagService> logger) : IRagService
 {
-    public async Task<DocumentInfo> UploadAsync(
-        IFormFile file,
-        CancellationToken cancellationToken = default)
-    {
-        var text = await textExtractionService.ExtractAsync(file, cancellationToken);
-        var chunkTexts = chunkingService.Split(text);
-
-        var documentId = Guid.NewGuid();
-        var documentName = Path.GetFileName(file.FileName);
-        var vectorChunks = new List<VectorChunk>(chunkTexts.Count);
-
-        for (var index = 0; index < chunkTexts.Count; index++)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-
-            var content = chunkTexts[index];
-            var vector = await embeddingService.CreateEmbeddingAsync(
-                content,
-                cancellationToken);
-
-            vectorChunks.Add(new VectorChunk(
-                Guid.NewGuid(),
-                documentId,
-                documentName,
-                index,
-                content,
-                vector));
-        }
-
-        await vectorStore.UpsertAsync(vectorChunks, cancellationToken);
-
-        var document = new DocumentInfo(
-            documentId,
-            documentName,
-            file.Length,
-            vectorChunks.Count,
-            DateTime.UtcNow);
-
-        await documentStore.SaveAsync(document, cancellationToken);
-
-        logger.LogInformation(
-            "Indexed document {DocumentName} with {ChunkCount} vector chunks.",
-            documentName,
-            vectorChunks.Count);
-
-        return document;
-    }
-
 
     public async Task<DocumentIndexResult> IndexDocumentAsync(
-        string fileName,
-        string content,
-        CancellationToken cancellationToken = default)
+    Guid documentId,
+    string fileName,
+    IReadOnlyList<string> chunks,
+    CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var safeFileName = Path.GetFileName(fileName?.Trim());
+        var safeFileName =
+            Path.GetFileName(
+                fileName?.Trim());
 
         if (string.IsNullOrWhiteSpace(safeFileName))
         {
@@ -75,60 +29,54 @@ public sealed class RagService(
                 nameof(fileName));
         }
 
-        if (string.IsNullOrWhiteSpace(content))
+
+        if (chunks is null || chunks.Count == 0)
         {
             throw new ArgumentException(
-                "Document content cannot be empty.",
-                nameof(content));
+                "At least one chunk is required.",
+                nameof(chunks));
         }
 
-        var chunkTexts = chunkingService.Split(content);
+        var vectorChunks =
+            new List<VectorChunk>(
+                chunks.Count);
 
-        if (chunkTexts.Count == 0)
-        {
-            throw new InvalidOperationException(
-                "The document did not produce any indexable chunks.");
-        }
-
-        var documentId = Guid.NewGuid();
-        var vectorChunks = new List<VectorChunk>(chunkTexts.Count);
-
-        for (var index = 0; index < chunkTexts.Count; index++)
+        for (
+            var index = 0;
+            index < chunks.Count;
+            index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var chunkContent = chunkTexts[index];
-            var vector = await embeddingService.CreateEmbeddingAsync(
-                chunkContent,
-                cancellationToken);
+            var chunkContent =
+                chunks[index];
 
-            vectorChunks.Add(new VectorChunk(
-                Guid.NewGuid(),
-                documentId,
-                safeFileName,
-                index,
-                chunkContent,
-                vector));
+            if (string.IsNullOrWhiteSpace(chunkContent))
+            {
+                continue;
+            }
+
+            var vector =
+                await embeddingService.CreateEmbeddingAsync(
+                    chunkContent,
+                    cancellationToken);
+
+            vectorChunks.Add(
+                new VectorChunk(
+                    Guid.NewGuid(),
+                    documentId,
+                    safeFileName,
+                    index,
+                    chunkContent,
+                    vector));
         }
 
         await vectorStore.UpsertAsync(
             vectorChunks,
             cancellationToken);
 
-        var sizeBytes = System.Text.Encoding.UTF8.GetByteCount(content);
-        var document = new DocumentInfo(
-            documentId,
-            safeFileName,
-            sizeBytes,
-            vectorChunks.Count,
-            DateTime.UtcNow);
-
-        await documentStore.SaveAsync(
-            document,
-            cancellationToken);
-
         logger.LogInformation(
-            "Indexed document {DocumentName} ({DocumentId}) with {ChunkCount} chunks through MCP.",
+            "Indexed document {DocumentName} ({DocumentId}) with {ChunkCount} chunks.",
             safeFileName,
             documentId,
             vectorChunks.Count);
@@ -137,12 +85,10 @@ public sealed class RagService(
         {
             Success = true,
             DocumentId = documentId,
-            FileName = safeFileName,
             ChunkCount = vectorChunks.Count,
             Message = "Document indexed successfully."
         };
     }
-
     public async Task<IReadOnlyList<RagSearchResult>> SearchAsync(
         string query,
         int topK = 5,
@@ -162,9 +108,10 @@ public sealed class RagService(
                 "TopK must be between 1 and 20.");
         }
 
-        var queryVector = await embeddingService.CreateEmbeddingAsync(
-            query,
-            cancellationToken);
+        var queryVector =
+            await embeddingService.CreateEmbeddingAsync(
+                query,
+                cancellationToken);
 
         logger.LogInformation(
             "Searching knowledge base for '{Query}'. Vector size: {VectorSize}, TopK: {TopK}",
@@ -172,16 +119,30 @@ public sealed class RagService(
             queryVector.Length,
             topK);
 
-        var results = await vectorStore.SearchAsync(
-            queryVector,
-            topK,
-            cancellationToken);
+        var results =
+            await vectorStore.SearchAsync(
+                queryVector,
+                topK,
+                cancellationToken);
+
+        var uniqueResults =
+            results
+                .GroupBy(
+                    x => x.Content,
+                    StringComparer.Ordinal)
+                .Select(group =>
+                    group
+                        .OrderByDescending(x => x.Score)
+                        .First())
+                .OrderByDescending(x => x.Score)
+                .Take(topK)
+                .ToList();
 
         logger.LogInformation(
-            "Knowledge search returned {ResultCount} results.",
-            results.Count);
+            "Knowledge search returned {ResultCount} unique results.",
+            uniqueResults.Count);
 
-        foreach (var result in results)
+        foreach (var result in uniqueResults)
         {
             logger.LogInformation(
                 "Match: {DocumentName}, score: {Score}, content: {Content}",
@@ -190,25 +151,43 @@ public sealed class RagService(
                 result.Content);
         }
 
-        return results;
+        return uniqueResults;
     }
-    public Task<IReadOnlyList<DocumentInfo>> ListDocumentsAsync(
-        CancellationToken cancellationToken = default)
-        => documentStore.ListAsync(cancellationToken);
 
-    public async Task<bool> DeleteDocumentAsync(
-        Guid documentId,
-        CancellationToken cancellationToken = default)
+   
+    public async Task<bool> DeleteVectorsAsync(
+    Guid documentId,
+    CancellationToken cancellationToken = default)
     {
-        var deleted = await documentStore.DeleteAsync(documentId, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
 
-        if (!deleted)
-        {
-            return false;
-        }
+        await vectorStore.DeleteDocumentAsync(
+            documentId,
+            cancellationToken);
 
-        await vectorStore.DeleteDocumentAsync(documentId, cancellationToken);
+        logger.LogInformation(
+            "Deleted vectors for document {DocumentId}.",
+            documentId);
+
         return true;
     }
 
+ 
+    private static string ComputeContentHash(
+        string content)
+    {
+        var normalized =
+            content.Trim();
+
+        var bytes =
+            Encoding.UTF8.GetBytes(
+                normalized);
+
+        var hash =
+            SHA256.HashData(
+                bytes);
+
+        return Convert.ToHexString(
+            hash);
+    }
 }

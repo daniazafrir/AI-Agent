@@ -1,17 +1,22 @@
-<mat-sidenav-container
-  class="shell"
-  dir="ltr">
+<mat-sidenav-container class="shell" dir="ltr">
 
-  <mat-sidenav
-    mode="side"
-    opened>
+    <mat-sidenav mode="side" opened>
 
-    <app-conversation-list />
+        <div class="sidebar-content">
 
-  </mat-sidenav>
+            <app-conversation-list />
 
-  <mat-sidenav-content>
-    <app-chat />
-  </mat-sidenav-content>
+            <div class="sidebar-divider"></div>
+
+
+          
+
+        </div>
+
+    </mat-sidenav>
+
+    <mat-sidenav-content>
+        <app-chat />
+    </mat-sidenav-content>
 
 </mat-sidenav-container>

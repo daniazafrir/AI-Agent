@@ -1,5 +1,6 @@
 ﻿using Agent.Api.Chat;
 using OpenAI.Chat;
+using System.Runtime.CompilerServices;
 
 public sealed class AgentRuntime(
     IAgentLoop loop)
@@ -7,8 +8,10 @@ public sealed class AgentRuntime(
 {
     public Task<AgentRunResult> RunAsync(
         ICollection<ChatMessage> messages,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(messages);
+
         var context =
             CreateContext(messages);
 
@@ -17,36 +20,36 @@ public sealed class AgentRuntime(
             cancellationToken);
     }
 
+    public async IAsyncEnumerable<ChatStreamEvent>
+        RunStreamingAsync(
+            ICollection<ChatMessage> messages,
+            [EnumeratorCancellation]
+            CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(messages);
+
+        var context =
+            CreateContext(messages);
+
+        await foreach (
+            var streamEvent in
+                loop.RunStreamingAsync(
+                    context,
+                    cancellationToken)
+                .WithCancellation(
+                    cancellationToken))
+        {
+            yield return streamEvent;
+        }
+    }
+
     private static AgentContext CreateContext(
         ICollection<ChatMessage> messages)
     {
         return new AgentContext
         {
             ConversationId = Guid.Empty,
-            Messages = messages.ToList(),
-        };
-    }
-
-    public async IAsyncEnumerable<ChatStreamEvent> RunStreamingAsync(
-    ICollection<ChatMessage> messages,
-    [System.Runtime.CompilerServices.EnumeratorCancellation]
-    CancellationToken cancellationToken = default)
-    {
-        var result =
-            await RunAsync(
-                messages,
-                cancellationToken);
-
-        yield return new ChatStreamEvent
-        {
-            Type = "content",
-            Content = result.AssistantMessage
-        };
-
-        yield return new ChatStreamEvent
-        {
-            Type = "completed",
-            UsedTools = result.UsedTools
+            Messages = messages.ToList()
         };
     }
 }

@@ -30,7 +30,7 @@ public sealed class McpToolRegistry(
     }
 
     public async Task InitializeAsync(
-        CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default)
     {
         if (_initialized)
         {
@@ -38,7 +38,7 @@ public sealed class McpToolRegistry(
         }
 
         await _initializationLock.WaitAsync(
-            cancellationToken);
+            CancellationToken.None);
 
         try
         {
@@ -52,11 +52,14 @@ public sealed class McpToolRegistry(
 
             var mcpTools =
                 await mcpToolClient.ListToolsAsync(
-                    cancellationToken);
+                    CancellationToken.None);
 
-            var chatTools = new List<ChatTool>();
-            var toolNames = new HashSet<string>(
-                StringComparer.Ordinal);
+            var chatTools =
+                new List<ChatTool>();
+
+            var toolNames =
+                new HashSet<string>(
+                    StringComparer.Ordinal);
 
             foreach (var tool in mcpTools)
             {
@@ -66,7 +69,8 @@ public sealed class McpToolRegistry(
                     ChatTool.CreateFunctionTool(
                         functionName: tool.Name,
                         functionDescription:
-                            string.IsNullOrWhiteSpace(tool.Description)
+                            string.IsNullOrWhiteSpace(
+                                tool.Description)
                                 ? $"Execute MCP tool '{tool.Name}'."
                                 : tool.Description,
                         functionParameters:
@@ -90,12 +94,19 @@ public sealed class McpToolRegistry(
                 _definitions.Count,
                 string.Join(", ", _toolNames));
         }
+        catch (Exception exception)
+        {
+            logger.LogError(
+                exception,
+                "Failed to load MCP tool definitions.");
+
+            throw;
+        }
         finally
         {
             _initializationLock.Release();
         }
     }
-
     private static void ValidateTool(
         McpToolDefinition tool)
     {

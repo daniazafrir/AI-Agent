@@ -42,6 +42,21 @@ public sealed class OpenAiChatCompletionService(
             RawCompletion = completion
         };
     }
+
+    public async IAsyncEnumerable<StreamingChatCompletionUpdate> CompleteStreamingAsync(
+    ICollection<ChatMessage> messages,
+    ChatCompletionOptions options,
+    [System.Runtime.CompilerServices.EnumeratorCancellation]
+    CancellationToken cancellationToken)
+    {
+        await foreach (var update in chatClient.CompleteChatStreamingAsync(
+                           messages,
+                           options,
+                           cancellationToken))
+        {
+            yield return update;
+        }
+    }
     private static string GetAssistantMessage(
         ChatCompletion completion)
     {

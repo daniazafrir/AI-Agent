@@ -7,6 +7,42 @@ public sealed class ChatOrchestrator(
     ILogger<ChatOrchestrator> logger)
     : IChatOrchestrator
 {
+    private const string SystemPrompt =
+    """
+    You are an AI assistant with access to external tools.
+
+    Answer general knowledge questions from your own knowledge.
+
+    Use search_knowledge ONLY when the user asks about:
+    - uploaded documents
+    - internal company information
+    - HR policies
+    - contracts
+    - procedures
+    - employee handbooks
+    - information that is likely stored in the knowledge base
+
+    Do NOT use search_knowledge for:
+    - general definitions
+    - programming concepts
+    - science
+    - history
+    - mathematics
+    - public knowledge
+
+    Examples:
+
+    User: What is MCP?
+    -> Answer directly. Do NOT call search_knowledge.
+
+    User: What is Angular?
+    -> Answer directly. Do NOT call search_knowledge.
+
+    User: What does the employee handbook say about vacation days?
+    -> Call search_knowledge.
+
+    Always answer in the same language as the user's latest message.
+    """;
 
     public async Task<Agent.Api.Contracts.ChatResponse> ChatAsync(
     Agent.Api.Contracts.ChatRequest request,
@@ -18,7 +54,7 @@ public sealed class ChatOrchestrator(
         {
             throw new ArgumentException(
                 "Message is required.",
-                nameof(request));
+                nameof(request)); 
         }
 
         var conversationId =
@@ -29,8 +65,9 @@ public sealed class ChatOrchestrator(
             await conversationService.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                null,
+                SystemPrompt,
                 cancellationToken);
+
 
         var result =
             await agentRuntime.RunAsync(
@@ -47,7 +84,8 @@ public sealed class ChatOrchestrator(
         {
             ConversationId = conversationId,
             Answer = result.AssistantMessage,
-            UsedTools = result.UsedTools.ToArray()
+            UsedTools = result.UsedTools.ToArray(),
+            Sources = result.Sources
         };
     }
    
@@ -61,11 +99,17 @@ public sealed class ChatOrchestrator(
             request.ConversationId
             ?? Guid.NewGuid();
 
+        yield return new ChatStreamEvent
+        {
+            Type = "conversation",
+            ConversationId = conversationId
+        };
+
         var messages =
             await conversationService.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                null,
+                SystemPrompt,
                 cancellationToken);
 
         var assistantText =
@@ -94,6 +138,14 @@ public sealed class ChatOrchestrator(
             {
                 usedTools.AddRange(
                     streamEvent.UsedTools);
+            }
+
+            if (streamEvent.Type == "completed")
+            {
+                logger.LogInformation(
+                    "Completed stream event. UsedTools: {UsedToolsCount}, Sources: {SourcesCount}",
+                    streamEvent.UsedTools?.Count ?? 0,
+                    streamEvent.Sources?.Count ?? 0);
             }
 
             yield return streamEvent;

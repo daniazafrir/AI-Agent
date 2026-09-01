@@ -16,6 +16,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 import { DocumentApiService } from '../document-api.service';
 import { DocumentState } from '../document.state';
+import { KnowledgeEventsService } from '../knowledge-base/knowledge-events.service';
 
 @Component({
   selector: 'app-document-upload',
@@ -34,6 +35,9 @@ export class DocumentUploadComponent {
   private readonly documentApi =
     inject(DocumentApiService);
 
+  private readonly events =
+    inject(KnowledgeEventsService);
+  
   readonly state =
     inject(DocumentState);
 
@@ -60,8 +64,8 @@ export class DocumentUploadComponent {
     if (!this.isValidFile(file)) {
 
       this.state.error.set(
-        'Only TXT files up to 2MB are supported.'
-      );
+  'Only TXT or PDF files up to 2MB are supported.'
+);
 
       this.selectedFile.set(null);
 
@@ -104,8 +108,8 @@ export class DocumentUploadComponent {
             const progress =
               total > 0
                 ? Math.round(
-                    100 * event.loaded / total
-                  )
+                  100 * event.loaded / total
+                )
                 : 0;
 
             this.state.progress.set(
@@ -128,7 +132,10 @@ export class DocumentUploadComponent {
             this.state.uploading.set(false);
 
             this.selectedFile.set(null);
+
+            this.events.refresh();
           }
+
         },
 
         error: error => {
@@ -156,19 +163,27 @@ export class DocumentUploadComponent {
   }
 
   private isValidFile(
-    file: File
-  ): boolean {
+  file: File
+): boolean {
 
-    const maxSize =
-      2 * 1024 * 1024;
+  const maxSize =
+    2 * 1024 * 1024;
 
-    const isTxt =
-      file.type === 'text/plain'
-      || file.name
-        .toLowerCase()
-        .endsWith('.txt');
+  const fileName =
+    file.name.toLowerCase();
 
-    return isTxt
-      && file.size <= maxSize;
-  }
+  const isTxt =
+    file.type === 'text/plain'
+    || fileName.endsWith('.txt');
+
+  const isPdf =
+    file.type === 'application/pdf'
+    || fileName.endsWith('.pdf');
+
+  return (
+    isTxt ||
+    isPdf
+  ) &&
+    file.size <= maxSize;
+}
 }

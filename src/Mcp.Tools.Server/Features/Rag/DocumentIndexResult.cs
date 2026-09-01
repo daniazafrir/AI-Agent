@@ -2,13 +2,11 @@
 
 public sealed class DocumentIndexResult
 {
+    public bool Success { get; init; }
+
     public Guid DocumentId { get; init; }
 
-    public string FileName { get; init; } = string.Empty;
-
     public int ChunkCount { get; init; }
-
-    public bool Success { get; init; }
 
     public string Message { get; init; } = string.Empty;
 }

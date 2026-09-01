@@ -66,9 +66,6 @@ builder.Services.AddSingleton<
     ITextExtractionService,
     TxtTextExtractionService>();
 
-builder.Services.AddSingleton<
-    IChunkingService,
-    ChunkingService>();
 
 //
 // Qdrant
@@ -94,9 +91,7 @@ builder.Services.AddSingleton<
 // RAG
 //
 
-builder.Services.AddSingleton<
-    IRagDocumentStore,
-    InMemoryRagDocumentStore>();
+
 
 builder.Services.AddSingleton<
     IRagService,
@@ -112,10 +107,7 @@ builder.Services
     {
         options.Stateless = true;
     })
-    .WithTools<TimeTools>()
-    .WithTools<CalculatorTools>()
-    .WithTools<KnowledgeTools>()
-    .WithTools<DocumentTools>();
+    .WithToolsFromAssembly();
 
 var app = builder.Build();
 

@@ -1,45 +1,58 @@
-<div
-  class="composer-shell"
-  [class.focused]="message.value">
+<div class="composer-shell">
 
   <textarea
     rows="2"
     dir="auto"
     placeholder="שאל משהו..."
     [formControl]="message"
+    [disabled]="loading()"
     (keydown)="onKeyDown($event)">
   </textarea>
 
+  <button
+    type="button"
+    class="attach-button"
+    aria-label="Attach document">
+
+    <mat-icon>
+      attach_file
+    </mat-icon>
+
+  </button>
+
   <div class="composer-actions">
 
-    <button
-      type="button"
-      class="attach-button"
-      aria-label="Attach document">
+    @if (!loading()) {
 
-      <mat-icon>
-        attach_file
-      </mat-icon>
+      <button
+        type="button"
+        mat-flat-button
+        class="send-button"
+        [disabled]="message.invalid"
+        (click)="submit()">
 
-    </button>
+        <mat-icon>send</mat-icon>
 
-    <button
-      type="button"
-      class="send-button"
-      [disabled]="loading() || message.invalid"
-      (click)="submit()"
-      aria-label="Send">
+      </button>
 
-      <mat-icon>
-        send
-      </mat-icon>
+    } @else {
 
-    </button>
+      <button
+        type="button"
+        mat-flat-button
+        class="stop-button"
+        (click)="stopGeneration()">
+
+        <mat-icon>stop</mat-icon>
+
+      </button>
+
+    }
 
   </div>
 
   <div class="composer-hint">
-    Enter לשליחה · Shift + Enter לשורה חדשה
+    Enter לשליחה · Shift+Enter לשורה חדשה
   </div>
 
 </div>

@@ -12,9 +12,7 @@ import {
 } from '@angular/forms';
 
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-composer',
@@ -22,17 +20,19 @@ import { MatInputModule } from '@angular/material/input';
   imports: [
     ReactiveFormsModule,
     MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatInputModule
+    MatIconModule
   ],
   templateUrl: './composer.component.html',
   styleUrl: './composer.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ComposerComponent {
+
   readonly loading = input(false);
+
   readonly send = output<string>();
+
+  readonly stop = output<void>();
 
   readonly message = new FormControl('', {
     nonNullable: true,
@@ -43,22 +43,37 @@ export class ComposerComponent {
   });
 
   submit(): void {
-    const value = this.message.value.trim();
 
-    if (!value || this.message.invalid || this.loading()) {
+    const value =
+      this.message.value.trim();
+
+    if (
+      !value ||
+      this.message.invalid ||
+      this.loading()
+    ) {
       return;
     }
 
     this.send.emit(value);
+
     this.message.reset();
   }
 
-  onKeyDown(event: KeyboardEvent): void {
+  stopGeneration(): void {
+    this.stop.emit();
+  }
+
+  onKeyDown(
+    event: KeyboardEvent
+  ): void {
+
     if (
       event.key === 'Enter' &&
-      (event.ctrlKey || event.metaKey)
+      !event.shiftKey
     ) {
       event.preventDefault();
+
       this.submit();
     }
   }
