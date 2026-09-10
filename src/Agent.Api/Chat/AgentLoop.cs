@@ -1,4 +1,5 @@
-﻿using Agent.Api.Configuration;
+﻿using Agent.Api.Chat.Models;
+using Agent.Api.Configuration;
 using Agent.Api.Features.Conversation;
 using Agent.Api.Mcp;
 using Agent.Api.OpenAI;
@@ -240,19 +241,21 @@ public sealed class AgentLoop(
                     Type = "completed",
 
                     UsedTools =
-         context.UsedTools
-             .Distinct(
-                 StringComparer.OrdinalIgnoreCase)
-             .ToList(),
+                    context.UsedTools
+                        .Distinct(
+                            StringComparer.OrdinalIgnoreCase)
+                        .ToList(),
 
-                    Sources =
-         context.Sources
-             .DistinctBy(x => new
-             {
-                 x.DocumentName,
-                 x.ChunkIndex
-             })
-             .ToList()
+                                Sources =
+                    context.Sources
+                        .DistinctBy(x => new
+                        {
+                            x.DocumentName,
+                            x.ChunkIndex
+                        })
+                        .ToList(),
+
+                    Debug = context.Debug
                 };
 
                 yield break;
@@ -324,13 +327,18 @@ public sealed class AgentLoop(
                             cancellationToken);
 
                     if (string.Equals(
-        toolCall.FunctionName,
-        "search_knowledge",
-        StringComparison.OrdinalIgnoreCase))
+                     toolCall.FunctionName,
+                     "search_knowledge",
+                     StringComparison.OrdinalIgnoreCase))
                     {
                         ExtractSources(
                             result.RawContent,
                             context.Sources);
+
+                        context.Debug =
+                            ExtractDebugInfo(
+                                result.RawContent,
+                                toolCall.FunctionArguments);
                     }
 
                     logger.LogInformation(
@@ -374,7 +382,84 @@ public sealed class AgentLoop(
             $"Agent exceeded the maximum number of {_options.MaxToolRounds} rounds.");
     }
 
+    private static ChatDebugInfo ExtractDebugInfo(
+    string rawContent,
+    BinaryData functionArguments)
+    {
+        var query = string.Empty;
+        var vectorResults = 0;
+        var keywordResults = 0;
+        var mergedResults = 0;
+        var searchTimeMs = 0L;
 
+        try
+        {
+            using var argsDocument =
+                JsonDocument.Parse(
+                    functionArguments.ToString());
+
+            if (argsDocument.RootElement.TryGetProperty(
+                "query",
+                out var queryElement))
+            {
+                query =
+                    queryElement.GetString() ??
+                    string.Empty;
+            }
+
+            using var resultDocument =
+                JsonDocument.Parse(rawContent);
+
+            var root =
+                resultDocument.RootElement;
+
+            if (root.TryGetProperty(
+                "vectorResults",
+                out var vectorElement))
+            {
+                vectorResults =
+                    vectorElement.GetInt32();
+            }
+
+            if (root.TryGetProperty(
+                "keywordResults",
+                out var keywordElement))
+            {
+                keywordResults =
+                    keywordElement.GetInt32();
+            }
+
+            if (root.TryGetProperty(
+                "mergedResults",
+                out var mergedElement))
+            {
+                mergedResults =
+                    mergedElement.GetInt32();
+            }
+
+            if (root.TryGetProperty(
+                "searchTimeMs",
+                out var timeElement))
+            {
+                searchTimeMs =
+                    timeElement.GetInt64();
+            }
+        }
+        catch (JsonException)
+        {
+            // ignore malformed debug payload
+        }
+
+        return new ChatDebugInfo
+        {
+            ToolName = "search_knowledge",
+            Query = query,
+            VectorResults = vectorResults,
+            KeywordResults = keywordResults,
+            MergedResults = mergedResults,
+            SearchTimeMs = searchTimeMs
+        };
+    }
     private ChatCompletionOptions BuildOptions(
     AgentContext context)
     {
@@ -425,21 +510,30 @@ public sealed class AgentLoop(
 
             foreach (var match in matches.EnumerateArray())
             {
-                var documentId =
-                    match.GetProperty("documentId")
-                        .GetGuid();
+                if (!TryGetPropertyIgnoreCase(
+                        match,
+                        "documentId",
+                        out var documentIdElement) ||
+                    !documentIdElement.TryGetGuid(out var documentId) ||
+                    !TryGetPropertyIgnoreCase(
+                        match,
+                        "documentName",
+                        out var documentNameElement) ||
+                    !TryGetPropertyIgnoreCase(
+                        match,
+                        "chunkIndex",
+                        out var chunkIndexElement) ||
+                    !chunkIndexElement.TryGetInt32(out var chunkIndex) ||
+                    !TryGetPropertyIgnoreCase(
+                        match,
+                        "score",
+                        out var scoreElement) ||
+                    !scoreElement.TryGetDouble(out var score))
+                {
+                    continue;
+                }
 
-                var documentName =
-                    match.GetProperty("documentName")
-                        .GetString();
-
-                var chunkIndex =
-                    match.GetProperty("chunkIndex")
-                        .GetInt32();
-
-                var score =
-                    match.GetProperty("score")
-                        .GetDouble();
+                var documentName = documentNameElement.GetString();
 
                 if (string.IsNullOrWhiteSpace(documentName))
                 {
@@ -460,5 +554,29 @@ public sealed class AgentLoop(
         {
             // ignore invalid tool payload
         }
+    }
+
+    private static bool TryGetPropertyIgnoreCase(
+        JsonElement element,
+        string propertyName,
+        out JsonElement value)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                if (string.Equals(
+                        property.Name,
+                        propertyName,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    value = property.Value;
+                    return true;
+                }
+            }
+        }
+
+        value = default;
+        return false;
     }
 }
