@@ -1,4 +1,5 @@
-﻿using Agent.Api.Tools;
+﻿using Agent.Api.Chat.Models;
+using Agent.Api.Tools;
 using OpenAI.Chat;
 using System.Runtime.CompilerServices;
 

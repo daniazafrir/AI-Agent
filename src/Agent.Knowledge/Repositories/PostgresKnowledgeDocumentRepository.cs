@@ -1,8 +1,8 @@
-﻿using Agent.Api.Entitites;
-using Agent.Api.Infrastructure.Persistence;
+﻿using Agent.Knowledge.Entitites;
+using Agent.Knowledge.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
-namespace Agent.Api.Features.Knowledge;
+namespace Agent.Knowledge.Repositories;
 
 public sealed class PostgresKnowledgeDocumentRepository(
     AgentDbContext dbContext)

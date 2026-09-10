@@ -1,3 +1,5 @@
+using Agent.Knowledge.Search.Models;
+
 namespace Mcp.Tools.Server.Features.Rag;
 
 public interface IRagService
@@ -8,7 +10,7 @@ public interface IRagService
     string fileName,
     IReadOnlyList<string> chunks,
     CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<RagSearchResult>> SearchAsync(
+    Task<RagSearchResult> SearchAsync(
         string query,
         int topK = 5,
         CancellationToken cancellationToken = default);
@@ -17,4 +19,6 @@ public interface IRagService
     Task<bool> DeleteVectorsAsync(
     Guid documentId,
         CancellationToken cancellationToken = default);
+
+   
 }

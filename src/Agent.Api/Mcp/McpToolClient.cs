@@ -14,6 +14,23 @@ public sealed class McpToolClient(
 {
     private readonly McpOptions _options = options.Value;
 
+    public async Task<T> CallToolAsync<T>(
+    string toolName,
+    IReadOnlyDictionary<string, object?> arguments,
+    CancellationToken cancellationToken = default)
+    {
+        var json =
+            await CallToolAsync(
+                toolName,
+                arguments,
+                cancellationToken);
+
+        return JsonSerializer.Deserialize<T>(
+            json,
+            JsonSerializerOptions.Web)
+            ?? throw new InvalidOperationException(
+                $"Could not deserialize MCP response to {typeof(T).Name}.");
+    }
     public async Task<IReadOnlyList<McpToolDefinition>> ListToolsAsync(
         CancellationToken cancellationToken = default)
     {

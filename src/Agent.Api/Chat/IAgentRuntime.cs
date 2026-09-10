@@ -1,4 +1,5 @@
-﻿using OpenAI.Chat;
+﻿using Agent.Api.Chat.Models;
+using OpenAI.Chat;
 
 namespace Agent.Api.Chat;
 

@@ -9,4 +9,8 @@ public interface IMcpToolClient
         string toolName,
         IReadOnlyDictionary<string, object?> arguments,
         CancellationToken cancellationToken = default);
+    Task<T> CallToolAsync<T>(
+    string toolName,
+    IReadOnlyDictionary<string, object?> arguments,
+    CancellationToken cancellationToken = default);
 }

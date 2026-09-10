@@ -1,9 +1,9 @@
-﻿using Agent.Api.Entitites;
-using Agent.Api.Infrastructure.Persistence;
-using Agent.Api.Knowledge;
+﻿using Agent.Knowledge.Entitites;
+using Agent.Knowledge.Infrastructure.Persistence;
+using Agent.Knowledge.Search.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace Agent.Api.Features.Knowledge;
+namespace Agent.Knowledge.Repositories;
 
 public sealed class PostgresKnowledgeChunkRepository(
     AgentDbContext dbContext)
@@ -61,5 +61,38 @@ public sealed class PostgresKnowledgeChunkRepository(
             .Where(x => x.DocumentId == documentId)
             .OrderBy(x => x.ChunkIndex)
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<KnowledgeSearchResult>>
+    SearchAsync(
+        string query,
+        int topK,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            return [];
+        }
+
+        return await dbContext.KnowledgeChunks
+            .AsNoTracking()
+            .Where(x =>
+                EF.Functions.ILike(
+                    x.Content,
+                    $"%{query}%"))
+            .OrderBy(x => x.ChunkIndex)
+            .Take(topK)
+            .Select(x =>
+                new KnowledgeSearchResult(
+                    x.DocumentId,
+                    x.Document!.FileName,
+                    x.ChunkIndex,
+                    x.Content,
+                    1.0,
+                    SearchEngineType.Keyword
+                )
+)
+            .ToListAsync(
+                cancellationToken);
     }
 }

@@ -1,7 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  inject
+  inject,
+  signal
 } from '@angular/core';
 
 import { ChatStateService } from './chat-state.service';
@@ -9,6 +10,7 @@ import { ComposerComponent } from './components/composer/composer.component';
 import { DocumentUploadComponent } from "../documents/document-upload/document-upload.component";
 import { MessageListComponent } from './message-list/message-list.component';
 import { KnowledgeBaseComponent } from "../documents/knowledge-base/knowledge-base.component";
+import { DebugPanelComponent } from "./debug-panel/debug-panel.component";
 
 @Component({
   selector: 'app-chat',
@@ -17,7 +19,8 @@ import { KnowledgeBaseComponent } from "../documents/knowledge-base/knowledge-ba
     MessageListComponent,
     ComposerComponent,
     DocumentUploadComponent,
-    KnowledgeBaseComponent
+    KnowledgeBaseComponent,
+    DebugPanelComponent
 ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.scss',
@@ -27,6 +30,12 @@ export class ChatComponent {
 
   readonly state =
     inject(ChatStateService);
+
+  readonly isDebugCollapsed = signal(false);
+
+  setDebugCollapsed(collapsed: boolean): void {
+    this.isDebugCollapsed.set(collapsed);
+  }
 
   sendMessage(message: string): void {
     this.state.send(message);

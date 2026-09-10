@@ -1,5 +1,11 @@
+using Agent.Knowledge.Infrastructure.Persistence;
+using Agent.Knowledge.Repositories;
+using Agent.Knowledge.Search.Keyword;
 using Mcp.Tools.Server.Features.Rag;
+using Mcp.Tools.Server.Features.Rag.Hybrid;
+using Mcp.Tools.Server.Features.Rag.Ranking;
 using Mcp.Tools.Server.Tools;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OpenAI.Embeddings;
 using Qdrant.Client;
@@ -87,15 +93,40 @@ builder.Services.AddSingleton<
     IVectorStore,
     QdrantVectorStore>();
 
+builder.Services.AddSingleton<IHybridSearchService, HybridSearchService>();
+
+builder.Services.AddSingleton<RrfRanker>();
 //
 // RAG
 //
 
 
+var connectionString =
+    builder.Configuration.GetConnectionString(
+        "AgentDatabase")
+    ?? throw new InvalidOperationException(
+        "Connection string 'AgentDatabase' is missing.");
+
+builder.Services.AddDbContext<AgentDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 builder.Services.AddSingleton<
     IRagService,
     RagService>();
+
+builder.Services.AddScoped<
+    IKnowledgeDocumentRepository,
+    PostgresKnowledgeDocumentRepository>();
+
+
+builder.Services.AddScoped<
+    IKnowledgeChunkRepository,
+    PostgresKnowledgeChunkRepository>();
+
+builder.Services.AddScoped<
+    IKeywordSearchService,
+    KeywordSearchService>();
+
 
 //
 // MCP

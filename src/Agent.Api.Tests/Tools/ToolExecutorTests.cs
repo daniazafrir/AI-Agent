@@ -296,7 +296,7 @@ public sealed class ToolExecutorTests
             arguments);
 
         // Assert
-        result.Should().Be("""{"success":true}""");
+        result.Content.Should().Be("""{"success":true}""");
 
         _mcpToolClient.Verify(x =>
             x.CallToolAsync(
@@ -384,6 +384,85 @@ public sealed class ToolExecutorTests
                 It.IsAny<IReadOnlyDictionary<string, object?>>(),
                 It.IsAny<CancellationToken>()),
             Times.Never);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_Normalize_PascalCase_Knowledge_Matches()
+    {
+        // Arrange
+        const string toolName = "search_knowledge";
+
+        _toolRegistry
+            .Setup(x => x.Contains(toolName))
+            .Returns(true);
+
+        _mcpToolClient
+            .Setup(x => x.CallToolAsync(
+                toolName,
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(
+                """
+                {
+                  "matches": [
+                    {
+                      "DocumentName": "employee-handbook.pdf",
+                      "Content": "Employees receive 20 vacation days."
+                    }
+                  ]
+                }
+                """);
+
+        // Act
+        var result = await _sut.ExecuteAsync(
+            toolName,
+            BinaryData.FromString(
+                """{"query":"vacation days"}"""));
+
+        // Assert
+        result.Content.Should().Contain(
+            "Source: employee-handbook.pdf");
+        result.Content.Should().Contain(
+            "Employees receive 20 vacation days.");
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_Should_Return_Error_When_Mcp_Tool_Times_Out()
+    {
+        // Arrange
+        const string toolName = "search_knowledge";
+
+        _toolRegistry
+            .Setup(x => x.Contains(toolName))
+            .Returns(true);
+
+        _mcpToolClient
+            .Setup(x => x.CallToolAsync(
+                toolName,
+                It.IsAny<IReadOnlyDictionary<string, object?>>(),
+                It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("MCP timeout."));
+
+        // Act
+        var result = await _sut.ExecuteAsync(
+            toolName,
+            BinaryData.FromString(
+                """{"query":"vacation days"}"""));
+
+        // Assert
+        using var document = JsonDocument.Parse(result.Content);
+
+        document.RootElement
+            .GetProperty("success")
+            .GetBoolean()
+            .Should()
+            .BeFalse();
+
+        document.RootElement
+            .GetProperty("error")
+            .GetString()
+            .Should()
+            .Be("The MCP tool timed out before returning a result.");
     }
 
     [Fact]

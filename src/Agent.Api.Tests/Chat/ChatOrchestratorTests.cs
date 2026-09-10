@@ -1,4 +1,5 @@
 ﻿using Agent.Api.Chat;
+using Agent.Api.Chat.Models;
 using Agent.Api.Configuration;
 using Agent.Api.Contracts;
 using Agent.Api.Features.Conversation;

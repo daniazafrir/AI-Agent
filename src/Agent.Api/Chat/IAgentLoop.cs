@@ -1,4 +1,6 @@
-﻿namespace Agent.Api.Chat;
+﻿using Agent.Api.Chat.Models;
+
+namespace Agent.Api.Chat;
 
 public interface IAgentLoop
 {

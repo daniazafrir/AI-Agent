@@ -1,3 +1,16 @@
+using Agent.Knowledge.Search.Models;
+
 namespace Mcp.Tools.Server.Features.Rag;
 
-public sealed record RagSearchResult(Guid DocumentId,string DocumentName,int ChunkIndex,string Content,double Score);
+public sealed class RagSearchResult
+{
+    public IReadOnlyList<KnowledgeSearchResult> Matches { get; init; } = [];
+
+    public int VectorResults { get; init; }
+
+    public int KeywordResults { get; init; }
+
+    public int MergedResults { get; init; }
+
+    public long SearchTimeMs { get; init; }
+}

@@ -1,4 +1,5 @@
-﻿using Agent.Api.Contracts;
+﻿using Agent.Api.Chat.Models;
+using Agent.Api.Contracts;
 
 namespace Agent.Api.Chat;
 

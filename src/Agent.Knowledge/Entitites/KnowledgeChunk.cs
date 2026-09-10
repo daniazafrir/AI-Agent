@@ -1,4 +1,4 @@
-﻿namespace Agent.Api.Entitites;
+﻿namespace Agent.Knowledge.Entitites;
 
 public sealed class KnowledgeChunk
 {

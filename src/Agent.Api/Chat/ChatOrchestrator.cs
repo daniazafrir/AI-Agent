@@ -1,4 +1,5 @@
 ﻿using Agent.Api.Chat;
+using Agent.Api.Chat.Models;
 using Agent.Api.Features.Conversation;
 
 public sealed class ChatOrchestrator(

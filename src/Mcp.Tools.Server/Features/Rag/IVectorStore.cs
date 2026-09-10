@@ -1,4 +1,4 @@
-using Mcp.Tools.Server.Features.Rag;
+using Agent.Knowledge.Search.Models;
 
 namespace Mcp.Tools.Server.Features.Rag;
 
@@ -10,7 +10,7 @@ public interface IVectorStore
         IReadOnlyList<VectorChunk> chunks,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<RagSearchResult>> SearchAsync(
+    Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(
         ReadOnlyMemory<float> queryVector,
         int topK,
         CancellationToken cancellationToken = default);

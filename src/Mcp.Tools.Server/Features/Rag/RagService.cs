@@ -1,3 +1,5 @@
+using Agent.Knowledge.Search.Models;
+using Mcp.Tools.Server.Features.Rag.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,6 +9,7 @@ public sealed class RagService(
     ITextExtractionService textExtractionService,
     IEmbeddingService embeddingService,
     IVectorStore vectorStore,
+    IHybridSearchService hybridSearch,
     ILogger<RagService> logger) : IRagService
 {
 
@@ -89,10 +92,10 @@ public sealed class RagService(
             Message = "Document indexed successfully."
         };
     }
-    public async Task<IReadOnlyList<RagSearchResult>> SearchAsync(
-        string query,
-        int topK = 5,
-        CancellationToken cancellationToken = default)
+    public async Task<RagSearchResult> SearchAsync(
+    string query,
+    int topK = 5,
+    CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -108,53 +111,72 @@ public sealed class RagService(
                 "TopK must be between 1 and 20.");
         }
 
-        var queryVector =
-            await embeddingService.CreateEmbeddingAsync(
+        query =
+            query.Trim();
+
+        var hybridResult =
+            await hybridSearch.SearchAsync(
                 query,
-                cancellationToken);
-
-        logger.LogInformation(
-            "Searching knowledge base for '{Query}'. Vector size: {VectorSize}, TopK: {TopK}",
-            query,
-            queryVector.Length,
-            topK);
-
-        var results =
-            await vectorStore.SearchAsync(
-                queryVector,
                 topK,
                 cancellationToken);
 
         var uniqueResults =
-            results
+            hybridResult
+                .Matches
                 .GroupBy(
-                    x => x.Content,
-                    StringComparer.Ordinal)
+                    x => new
+                    {
+                        x.DocumentId,
+                        x.ChunkIndex
+                    })
                 .Select(group =>
                     group
-                        .OrderByDescending(x => x.Score)
+                        .OrderByDescending(
+                            x => x.Score)
                         .First())
-                .OrderByDescending(x => x.Score)
+                .OrderByDescending(
+                    x => x.Score)
                 .Take(topK)
                 .ToList();
 
         logger.LogInformation(
-            "Knowledge search returned {ResultCount} unique results.",
-            uniqueResults.Count);
+            "Knowledge search returned {ResultCount} unique results. Vector={VectorCount}, Keyword={KeywordCount}, Merged={MergedCount}, Time={SearchTimeMs}ms.",
+            uniqueResults.Count,
+            hybridResult.VectorResults,
+            hybridResult.KeywordResults,
+            hybridResult.MergedResults,
+            hybridResult.SearchTimeMs);
 
         foreach (var result in uniqueResults)
         {
             logger.LogInformation(
-                "Match: {DocumentName}, score: {Score}, content: {Content}",
+                "Match: {DocumentName}, chunk: {ChunkIndex}, score: {Score}, engine: {SearchEngine}",
                 result.DocumentName,
+                result.ChunkIndex,
                 result.Score,
-                result.Content);
+                result.SearchEngine);
         }
 
-        return uniqueResults;
+        return new RagSearchResult
+        {
+            Matches =
+                uniqueResults,
+
+            VectorResults =
+                hybridResult.VectorResults,
+
+            KeywordResults =
+                hybridResult.KeywordResults,
+
+            MergedResults =
+                uniqueResults.Count,
+
+            SearchTimeMs =
+                hybridResult.SearchTimeMs
+        };
     }
 
-   
+
     public async Task<bool> DeleteVectorsAsync(
     Guid documentId,
     CancellationToken cancellationToken = default)

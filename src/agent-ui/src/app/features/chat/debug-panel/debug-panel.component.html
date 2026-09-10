@@ -1,0 +1,75 @@
+<aside
+    class="debug-panel"
+    [class.collapsed]="collapsed()"
+    [class.empty]="!debug()">
+  <div class="debug-header">
+    <mat-icon>bug_report</mat-icon>
+
+    @if (!collapsed()) {
+      <h3>RAG Debug</h3>
+    }
+
+    <button
+        type="button"
+        class="collapse-button"
+        [attr.aria-label]="collapsed() ? 'Expand debug panel' : 'Collapse debug panel'"
+        [title]="collapsed() ? 'Expand debug panel' : 'Collapse debug panel'"
+        (click)="toggleCollapsed()">
+      <mat-icon>{{ collapsed() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+    </button>
+  </div>
+
+  @if (!collapsed()) {
+    @if (debug(); as info) {
+      <mat-divider />
+
+      <section class="debug-section">
+        <div class="debug-row">
+          <span class="label">Tool</span>
+          <span class="value tool">{{ info.toolName }}</span>
+        </div>
+
+        <div class="debug-row">
+          <span class="label">Query</span>
+          <span class="value query">{{ info.query }}</span>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="debug-section">
+        <h4>Search</h4>
+
+        <div class="metric-grid">
+          <div class="metric-card">
+            <span class="metric-value">{{ info.vectorResults }}</span>
+            <span class="metric-label">Vector</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-value">{{ info.keywordResults }}</span>
+            <span class="metric-label">Keyword</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-value">{{ info.mergedResults }}</span>
+            <span class="metric-label">Merged</span>
+          </div>
+        </div>
+      </section>
+
+      <mat-divider />
+
+      <section class="debug-section">
+        <div class="debug-row">
+          <span class="label">Search time</span>
+          <span class="value">{{ info.searchTimeMs }} ms</span>
+        </div>
+      </section>
+    } @else {
+      <div class="empty-content">
+        Debug information will appear after a knowledge search.
+      </div>
+    }
+  }
+</aside>

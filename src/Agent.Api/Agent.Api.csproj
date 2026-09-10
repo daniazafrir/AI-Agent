@@ -28,4 +28,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.3" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Search\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Agent.Knowledge\Agent.Knowledge.csproj" />
+  </ItemGroup>
 </Project>

@@ -44,8 +44,8 @@ services:
     restart: unless-stopped
 
     build:
-      context: ./src/Agent.Api
-      dockerfile: ./Dockerfile
+      context: ./src
+      dockerfile: Agent.Api/Dockerfile
 
     environment:
       ASPNETCORE_ENVIRONMENT: Development

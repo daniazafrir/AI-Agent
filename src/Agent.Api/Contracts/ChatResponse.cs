@@ -1,3 +1,4 @@
+using Agent.Api.Chat.Models;
 using Agent.Api.Features.Conversation;
 
 namespace Agent.Api.Contracts;
@@ -11,4 +12,6 @@ public sealed class ChatResponse
     public string[] UsedTools { get; init; } = [];
 
     public List<KnowledgeSource> Sources { get; init; } = [];
+    public ChatDebugInfo? Debug { get; init; }
+
 }

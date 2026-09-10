@@ -1,5 +1,6 @@
 ﻿using Agent.Api.Documents;
 using Agent.Api.Entitites;
+using Agent.Knowledge.Entitites;
 using System.Threading.Tasks;
 
 namespace Agent.Api.Features.Knowledge;

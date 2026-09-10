@@ -1,5 +1,6 @@
-using Mcp.Tools.Server.Features.Rag;
+using Agent.Knowledge.Search.Models;
 using Google.Protobuf.Collections;
+using Mcp.Tools.Server.Features.Rag;
 using Microsoft.Extensions.Options;
 using Qdrant.Client;
 using Qdrant.Client.Grpc;
@@ -70,7 +71,7 @@ public sealed class QdrantVectorStore(
             cancellationToken: cancellationToken);
     }
 
-    public async Task<IReadOnlyList<RagSearchResult>> SearchAsync(
+    public async Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(
         ReadOnlyMemory<float> queryVector,
         int topK,
         CancellationToken cancellationToken = default)
@@ -88,12 +89,14 @@ public sealed class QdrantVectorStore(
         {
             var payload = result.Payload;
 
-            return new RagSearchResult(
+            return new KnowledgeSearchResult(
                 Guid.Parse(payload["documentId"].StringValue),
                 payload["documentName"].StringValue,
                 (int)payload["chunkIndex"].IntegerValue,
                 payload["content"].StringValue,
-                result.Score);
+                result.Score,
+                SearchEngineType.Vector // Replace with the correct enum value if needed
+            );
         }).ToList();
     }
 

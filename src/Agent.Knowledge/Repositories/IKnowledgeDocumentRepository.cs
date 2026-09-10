@@ -1,6 +1,6 @@
-﻿using Agent.Api.Entitites;
+﻿using Agent.Knowledge.Entitites;
 
-namespace Agent.Api.Features.Knowledge;
+namespace Agent.Knowledge.Repositories;
 
 public interface IKnowledgeDocumentRepository
 {
@@ -23,5 +23,5 @@ public interface IKnowledgeDocumentRepository
     Guid documentId,
     CancellationToken cancellationToken = default);
 
-   
+
 }

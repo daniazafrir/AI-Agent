@@ -1,8 +1,7 @@
-﻿using Agent.Api.Entitites;
-using Agent.Api.Features.Knowledge.Chunking;
-using Microsoft.EntityFrameworkCore;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
+
+namespace Agent.Api.Features.Knowledge.Chunking;
 
 public sealed partial class ChunkingService
     : IChunkingService
@@ -19,40 +18,30 @@ public sealed partial class ChunkingService
 
         if (chunkSize < 100)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(chunkSize));
+            throw new ArgumentOutOfRangeException(nameof(chunkSize));
         }
 
         if (overlap < 0 || overlap >= chunkSize)
         {
-            throw new ArgumentOutOfRangeException(
-                nameof(overlap));
+            throw new ArgumentOutOfRangeException(nameof(overlap));
         }
 
-        var normalized =
-            Normalize(text);
+        var normalized = Normalize(text);
 
-        var paragraphs =
-            ParagraphRegex
-                .Split(normalized)
-                .Select(x => x.Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .ToList();
+        var paragraphs = ParagraphRegex
+            .Split(normalized)
+            .Select(x => x.Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .ToList();
 
-        var chunks =
-            new List<string>();
+        var chunks = new List<string>();
 
-        var builder =
-            new StringBuilder();
+        var builder = new StringBuilder();
 
         foreach (var paragraph in paragraphs)
         {
-            if (
-                builder.Length > 0 &&
-                builder.Length +
-                paragraph.Length +
-                2 >
-                chunkSize)
+            if (builder.Length > 0 &&
+                builder.Length + paragraph.Length + 2 > chunkSize)
             {
                 AddChunk(
                     chunks,
@@ -65,36 +54,22 @@ public sealed partial class ChunkingService
 
                 builder.Clear();
 
-                if (!string.IsNullOrWhiteSpace(
-                        overlapText))
+                if (!string.IsNullOrWhiteSpace(overlapText))
                 {
-                    builder.Append(
-                        overlapText);
+                    builder.Append(overlapText);
                 }
             }
 
-            if (builder.Length > 0)
-            {
-                builder.AppendLine();
-                builder.AppendLine();
-            }
-
-            /*
-             * אם פסקה אחת גדולה יותר מה-chunkSize,
-             * נחלק אותה לפי משפטים/תווים.
-             */
             if (paragraph.Length > chunkSize)
             {
                 FlushBuilder(
                     chunks,
                     builder);
 
-                foreach (
-                    var chunk in
-                    SplitLargeParagraph(
-                        paragraph,
-                        chunkSize,
-                        overlap))
+                foreach (var chunk in SplitLargeParagraph(
+                             paragraph,
+                             chunkSize,
+                             overlap))
                 {
                     AddChunk(
                         chunks,
@@ -104,8 +79,13 @@ public sealed partial class ChunkingService
                 continue;
             }
 
-            builder.Append(
-                paragraph);
+            if (builder.Length > 0)
+            {
+                builder.AppendLine();
+                builder.AppendLine();
+            }
+
+            builder.Append(paragraph);
         }
 
         FlushBuilder(
@@ -113,43 +93,41 @@ public sealed partial class ChunkingService
             builder);
 
         return chunks
-            .Distinct(
-                StringComparer.Ordinal)
+            .Distinct(StringComparer.Ordinal)
             .ToList();
     }
 
-    private static string Normalize(
-        string text)
+    private static string Normalize(string text)
     {
         var normalized =
-            text.Replace(
-                "\r\n",
-                "\n");
+            text.Replace("\r\n", "\n");
 
-        /*
-         * שומרים line breaks,
-         * אבל מנקים tabs/spaces מיותרים.
-         */
+        // Fix words stuck together after PDF extraction:
+        // WorkEmployees -> Work Employees
         normalized =
-            HorizontalWhitespaceRegex
-                .Replace(
-                    normalized,
-                    " ");
+            MissingSpaceRegex.Replace(
+                normalized,
+                " ");
 
+        // Collapse spaces/tabs
         normalized =
-            ExcessiveNewLinesRegex
-                .Replace(
-                    normalized,
-                    "\n\n");
+            HorizontalWhitespaceRegex.Replace(
+                normalized,
+                " ");
+
+        // Collapse excessive blank lines
+        normalized =
+            ExcessiveNewLinesRegex.Replace(
+                normalized,
+                "\n\n");
 
         return normalized.Trim();
     }
 
-    private static IEnumerable<string>
-        SplitLargeParagraph(
-            string text,
-            int chunkSize,
-            int overlap)
+    private static IEnumerable<string> SplitLargeParagraph(
+        string text,
+        int chunkSize,
+        int overlap)
     {
         var start = 0;
 
@@ -168,18 +146,15 @@ public sealed partial class ChunkingService
                         end - 1,
                         end - start);
 
-                if (
-                    boundary >
+                if (boundary >
                     start + chunkSize / 2)
                 {
-                    end =
-                        boundary + 1;
+                    end = boundary + 1;
                 }
             }
 
             var chunk =
-                text[start..end]
-                    .Trim();
+                text[start..end].Trim();
 
             if (chunk.Length > 0)
             {
@@ -198,13 +173,11 @@ public sealed partial class ChunkingService
         }
     }
 
-   
     private static string GetOverlap(
         string text,
         int overlap)
     {
-        if (
-            overlap <= 0 ||
+        if (overlap <= 0 ||
             text.Length <= overlap)
         {
             return text;
@@ -213,21 +186,15 @@ public sealed partial class ChunkingService
         var start =
             text.Length - overlap;
 
-        /*
-         * ננסה להתחיל את ה-overlap
-         * בתחילת משפט/מילה ולא באמצע.
-         */
         var boundary =
             text.IndexOf(
                 ' ',
                 start);
 
-        if (
-            boundary >= 0 &&
+        if (boundary >= 0 &&
             boundary < text.Length - 1)
         {
-            start =
-                boundary + 1;
+            start = boundary + 1;
         }
 
         return text[start..]
@@ -264,11 +231,16 @@ public sealed partial class ChunkingService
     }
 
     private static readonly Regex HorizontalWhitespaceRegex =
-     new(@"[ \t]+", RegexOptions.Compiled);
+        new(@"[ \t]+", RegexOptions.Compiled);
 
     private static readonly Regex ExcessiveNewLinesRegex =
         new(@"\n{3,}", RegexOptions.Compiled);
 
+    // Blank line = paragraph
     private static readonly Regex ParagraphRegex =
         new(@"\n\s*\n", RegexOptions.Compiled);
+
+    // WorkEmployees -> Work Employees
+    private static readonly Regex MissingSpaceRegex =
+        new(@"(?<=[a-z])(?=[A-Z])", RegexOptions.Compiled);
 }

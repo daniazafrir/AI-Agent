@@ -1,17 +1,26 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /source
+﻿FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 
-COPY ["Agent.Api.csproj", "./"]
-RUN dotnet restore "Agent.Api.csproj"
+WORKDIR /src
+
+COPY ["Agent.Api/Agent.Api.csproj", "Agent.Api/"]
+COPY ["Agent.Knowledge/Agent.Knowledge.csproj", "Agent.Knowledge/"]
+
+RUN dotnet restore "Agent.Api/Agent.Api.csproj"
 
 COPY . .
 
+WORKDIR /src/Agent.Api
+
+# Restore נוסף אחרי COPY
+RUN dotnet restore "Agent.Api.csproj"
+
+# בלי --no-restore
 RUN dotnet publish "Agent.Api.csproj" \
     --configuration Release \
-    --output /app/publish \
-    --no-restore
+    --output /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+
 WORKDIR /app
 
 COPY --from=build /app/publish .

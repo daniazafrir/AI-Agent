@@ -1,29 +1,41 @@
+// src/app/core/models/chat.models.ts
+
 export interface ChatRequest {
   message: string;
-  conversationId: string | null;
+  conversationId?: string | null;
 }
 
-export interface ChatResponse {
-  conversationId: string;
-  answer: string;
-  usedTools: string[];
+export interface KnowledgeSource {
+  documentId: string;
+  documentName: string;
+  chunkIndex: number;
+  score: number;
 }
 
-export type ChatRole = 'user' | 'assistant';
+export interface ChatDebugInfo {
+  toolName: string;
+  query: string;
+  vectorResults: number;
+  keywordResults: number;
+  mergedResults: number;
+  searchTimeMs: number;
+}
+
+export interface ChatStreamEvent {
+  type: string;
+  content?: string | null;
+  toolName?: string | null;
+  usedTools?: string[] | null;
+  conversationId?: string | null;
+  sources?: KnowledgeSource[] | null;
+  debug?: ChatDebugInfo | null;
+}
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   usedTools?: string[];
   sources?: KnowledgeSource[];
-
-}
-
-export interface KnowledgeSource {
-    documentId: string;
-    documentName: string;
-    chunkIndex: number;
-    score: number;
 }
 export interface ConversationSummary {
 
@@ -32,24 +44,6 @@ export interface ConversationSummary {
     title: string;
 
     lastUpdated: string;
-
-}
-
-export interface ChatStreamEvent {
-
-  type: string;
-
-  content?: string;
-
-  toolName?: string;
-
-  usedTools?: string[];
-
-  conversationId?: string;
-
-    sources?: KnowledgeSource[] | null;
-
-  
 
 }
 

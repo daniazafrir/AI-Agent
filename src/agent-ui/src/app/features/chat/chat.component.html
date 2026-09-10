@@ -1,3 +1,7 @@
+<div
+    class="chat-layout"
+    [class.debug-collapsed]="isDebugCollapsed()">
+
 <main class="chat-page">
     <header class="chat-header">
         <div>
@@ -61,3 +65,9 @@
     <app-composer [loading]="state.isSending()" (send)="sendMessage($event)" (stop)="stopGeneration()">
     </app-composer>
 </main>
+<app-debug-panel
+    [debug]="state.debugInfo()"
+    [collapsed]="isDebugCollapsed()"
+    (collapsedChange)="setDebugCollapsed($event)"
+  />
+</div>

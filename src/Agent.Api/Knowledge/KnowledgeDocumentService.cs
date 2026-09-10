@@ -3,6 +3,8 @@ using Agent.Api.Features.Knowledge.Chunking;
 using Agent.Api.Features.Knowledge.Extraction;
 using Agent.Api.Knowledge;
 using Agent.Api.Mcp;
+using Agent.Knowledge.Entitites;
+using Agent.Knowledge.Repositories;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;

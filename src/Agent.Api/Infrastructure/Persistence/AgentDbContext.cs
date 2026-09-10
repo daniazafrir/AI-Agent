@@ -1,4 +1,5 @@
 using Agent.Api.Entitites;
+using Agent.Knowledge.Entitites;
 using Microsoft.EntityFrameworkCore;
 
 namespace Agent.Api.Infrastructure.Persistence;

@@ -14,6 +14,8 @@ using Agent.Api.Knowledge;
 using Agent.Api.Mcp;
 using Agent.Api.OpenAI;
 using Agent.Api.Tools;
+using Agent.Knowledge.Repositories;
+using Agent.Knowledge.Search.Keyword;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -22,6 +24,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.OpenApi;
 using OpenAI.Chat;
 using Serilog;
+using KnowledgeDbContext =
+    Agent.Knowledge.Infrastructure.Persistence.AgentDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -101,6 +105,10 @@ var connectionString =
 
 builder.Services.AddDbContext<AgentDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddDbContext<KnowledgeDbContext>(
+    options =>
+        options.UseNpgsql(connectionString));
 
 builder.Services.AddSingleton<ChatClient>(
     serviceProvider =>
@@ -184,6 +192,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IKnowledgeChunkRepository,
     PostgresKnowledgeChunkRepository>();
+
+builder.Services.AddScoped<
+    IKeywordSearchService,
+    KeywordSearchService>();
 
 builder.Services.AddSingleton<IChunkingService, ChunkingService>();
 

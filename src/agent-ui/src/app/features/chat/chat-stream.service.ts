@@ -1,224 +1,267 @@
+// chat-stream.service.ts
+
 import { Injectable } from '@angular/core';
 import {
-    Observable,
-    Subscriber
+  Observable,
+  Subscriber
 } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ChatRequest, ChatStreamEvent } from 'src/app/core/models/chat.models';
-
+import {
+  ChatRequest,
+  ChatStreamEvent
+} from 'src/app/core/models/chat.models';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root'
 })
 export class ChatStreamService {
-    private abortController?: AbortController;
 
-    stream(
-        request: ChatRequest
-    ): Observable<ChatStreamEvent> {
+  private abortController?: AbortController;
 
-        return new Observable<ChatStreamEvent>(
-            observer => {
+  stream(
+    request: ChatRequest
+  ): Observable<ChatStreamEvent> {
 
-                const controller =
-                    new AbortController();
+    return new Observable<ChatStreamEvent>(
+      observer => {
 
-                this.abortController =
-                    controller;
+        const controller =
+          new AbortController();
 
-                this.startStreaming(
-                    request,
-                    observer,
-                    controller
-                );
+        this.abortController =
+          controller;
 
-                return () => {
-                    controller.abort();
-
-                    if (
-                        this.abortController ===
-                        controller
-                    ) {
-                        this.abortController =
-                            undefined;
-                    }
-                };
-            }
+        this.startStreaming(
+          request,
+          observer,
+          controller
         );
-    }
 
-    private async startStreaming(
-        request: ChatRequest,
-        observer: Subscriber<ChatStreamEvent>,
-        controller: AbortController
-    ): Promise<void> {
-        try {
+        return () => {
+          controller.abort();
 
-            const response =
-                await fetch(
-                    `${environment.apiUrl}/api/chat/stream`,
-                    {
-                        method: 'POST',
+          if (
+            this.abortController ===
+            controller
+          ) {
+            this.abortController =
+              undefined;
+          }
+        };
+      }
+    );
+  }
 
-                        headers: {
-                            'Content-Type':
-                                'application/json'
-                        },
+  private async startStreaming(
+    request: ChatRequest,
+    observer: Subscriber<ChatStreamEvent>,
+    controller: AbortController
+  ): Promise<void> {
 
-                        body:
-                            JSON.stringify(request),
+    try {
 
-                        signal:
-                            controller.signal
-                    }
-                );
+      const response =
+        await fetch(
+          `${environment.apiUrl}/api/chat/stream`,
+          {
+            method: 'POST',
 
-            if (!response.ok) {
-                throw new Error(
-                    `Streaming request failed with HTTP ${response.status}.`
-                );
-            }
+            headers: {
+              'Content-Type':
+                'application/json'
+            },
 
-            if (!response.body) {
-                throw new Error(
-                    'Streaming response has no body.'
-                );
-            }
+            body:
+              JSON.stringify(request),
 
-            const reader =
-                response.body.getReader();
+            signal:
+              controller.signal
+          }
+        );
 
-            const decoder =
-                new TextDecoder();
+      if (!response.ok) {
+        throw new Error(
+          `Streaming request failed with HTTP ${response.status}.`
+        );
+      }
 
-            let buffer = '';
+      if (!response.body) {
+        throw new Error(
+          'Streaming response has no body.'
+        );
+      }
 
-            while (true) {
+      const reader =
+        response.body.getReader();
 
-                const {
-                    value,
-                    done
-                } = await reader.read();
+      const decoder =
+        new TextDecoder();
 
-                if (done) {
-                    break;
-                }
+      let buffer = '';
 
-                buffer += decoder.decode(
-                    value,
-                    {
-                        stream: true
-                    }
-                );
+      while (true) {
 
-                const blocks =
-                    buffer.split(/\r?\n\r?\n/);
+        const {
+          value,
+          done
+        } = await reader.read();
 
-                buffer =
-                    blocks.pop() ?? '';
-
-                for (const block of blocks) {
-
-                    const dataLine =
-                        block
-                            .split(/\r?\n/)
-                            .find(line =>
-                                line.startsWith('data:')
-                            );
-
-                    if (!dataLine) {
-                        continue;
-                    }
-
-                    const json =
-                        dataLine
-                            .substring(5)
-                            .trim();
-
-                    if (!json) {
-                        continue;
-                    }
-
-                    const raw =
-                        JSON.parse(json);
-
-                    /*
-                     * כרגע ה-.NET שלך מחזיר
-                     * Type / Content / UsedTools
-                     * ב-PascalCase.
-                     *
-                     * אנחנו מנרמלים כאן ל-camelCase.
-                     */
-                    const rawSources =
-                        raw.sources ??
-                        raw.Sources ??
-                        [];
-
-                    const event: ChatStreamEvent = {
-
-                        type:
-                            raw.type ??
-                            raw.Type,
-
-                        content:
-                            raw.content ??
-                            raw.Content,
-
-                        toolName:
-                            raw.toolName ??
-                            raw.ToolName,
-
-                        usedTools:
-                            raw.usedTools ??
-                            raw.UsedTools,
-
-                        conversationId:
-                            raw.conversationId ??
-                            raw.ConversationId,
-
-                        sources:
-                            rawSources.map((source: any) => ({
-                                documentId:
-                                    source.documentId ??
-                                    source.DocumentId,
-
-                                documentName:
-                                    source.documentName ??
-                                    source.DocumentName,
-
-                                chunkIndex:
-                                    source.chunkIndex ??
-                                    source.ChunkIndex,
-
-                                score:
-                                    source.score ??
-                                    source.Score
-                            }))
-                    };
-
-                    observer.next(event);
-                }
-            }
-
-            observer.complete();
-
+        if (done) {
+          break;
         }
-        catch (error) {
 
-            if (
-                controller.signal.aborted
-            ) {
-                observer.complete();
-                return;
-            }
+        buffer += decoder.decode(
+          value,
+          {
+            stream: true
+          }
+        );
 
-            observer.error(error);
+        const blocks =
+          buffer.split(/\r?\n\r?\n/);
+
+        buffer =
+          blocks.pop() ?? '';
+
+        for (const block of blocks) {
+
+          const dataLine =
+            block
+              .split(/\r?\n/)
+              .find(line =>
+                line.startsWith('data:')
+              );
+
+          if (!dataLine) {
+            continue;
+          }
+
+          const json =
+            dataLine
+              .substring(5)
+              .trim();
+
+          if (!json) {
+            continue;
+          }
+
+          const raw =
+            JSON.parse(json);
+
+          const rawSources =
+            raw.sources ??
+            raw.Sources ??
+            [];
+
+          const rawDebug =
+            raw.debug ??
+            raw.Debug ??
+            null;
+
+          const event:
+            ChatStreamEvent = {
+
+            type:
+              raw.type ??
+              raw.Type,
+
+            content:
+              raw.content ??
+              raw.Content,
+
+            toolName:
+              raw.toolName ??
+              raw.ToolName,
+
+            usedTools:
+              raw.usedTools ??
+              raw.UsedTools,
+
+            conversationId:
+              raw.conversationId ??
+              raw.ConversationId,
+
+            sources:
+              rawSources.map(
+                (source: any) => ({
+                  documentId:
+                    source.documentId ??
+                    source.DocumentId,
+
+                  documentName:
+                    source.documentName ??
+                    source.DocumentName,
+
+                  chunkIndex:
+                    source.chunkIndex ??
+                    source.ChunkIndex,
+
+                  score:
+                    source.score ??
+                    source.Score
+                })
+              ),
+
+            debug:
+              rawDebug
+                ? {
+                    toolName:
+                      rawDebug.toolName ??
+                      rawDebug.ToolName ??
+                      '',
+
+                    query:
+                      rawDebug.query ??
+                      rawDebug.Query ??
+                      '',
+
+                    vectorResults:
+                      rawDebug.vectorResults ??
+                      rawDebug.VectorResults ??
+                      0,
+
+                    keywordResults:
+                      rawDebug.keywordResults ??
+                      rawDebug.KeywordResults ??
+                      0,
+
+                    mergedResults:
+                      rawDebug.mergedResults ??
+                      rawDebug.MergedResults ??
+                      0,
+
+                    searchTimeMs:
+                      rawDebug.searchTimeMs ??
+                      rawDebug.SearchTimeMs ??
+                      0
+                  }
+                : null
+          };
+
+          observer.next(event);
         }
-    }
+      }
 
-    stop(): void {
-        this.abortController?.abort();
-        this.abortController = undefined;
+      observer.complete();
+
     }
+    catch (error) {
+
+      if (
+        controller.signal.aborted
+      ) {
+        observer.complete();
+        return;
+      }
+
+      observer.error(error);
+    }
+  }
+
+  stop(): void {
+    this.abortController?.abort();
+    this.abortController =
+      undefined;
+  }
 }
