@@ -8,7 +8,6 @@ namespace Agent.Api.Mcp;
 public sealed class McpToolClient(
     IOptions<McpOptions> options,
     IHttpClientFactory httpClientFactory,
-    ILoggerFactory loggerFactory,
     ILogger<McpToolClient> logger)
     : IMcpToolClient
 {

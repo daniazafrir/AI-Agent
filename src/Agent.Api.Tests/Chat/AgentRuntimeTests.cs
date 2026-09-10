@@ -163,18 +163,10 @@ public sealed class AgentRuntimeTests
         };
 
         _loop
-            .Setup(x => x.RunAsync(
+            .Setup(x => x.RunStreamingAsync(
                 It.IsAny<AgentContext>(),
                 It.IsAny<CancellationToken>()))
-            .ReturnsAsync(
-                new AgentRunResult
-                {
-                    AssistantMessage = "Hello!",
-                    UsedTools =
-                    [
-                        "calculate"
-                    ]
-                });
+            .Returns(StreamEvents());
 
         // Act
         var events =
@@ -204,5 +196,23 @@ public sealed class AgentRuntimeTests
         events[1].UsedTools.Should()
             .BeEquivalentTo(
                 ["calculate"]);
+    }
+
+    private static async IAsyncEnumerable<ChatStreamEvent>
+        StreamEvents()
+    {
+        await Task.Yield();
+
+        yield return new ChatStreamEvent
+        {
+            Type = "content",
+            Content = "Hello!"
+        };
+
+        yield return new ChatStreamEvent
+        {
+            Type = "completed",
+            UsedTools = ["calculate"]
+        };
     }
 }

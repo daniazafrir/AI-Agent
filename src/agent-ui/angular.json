@@ -44,7 +44,12 @@
           "defaultConfiguration": "development"
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "buildTarget": "agent-ui:build:development",
+            "tsConfig": "tsconfig.spec.json",
+            "runner": "vitest"
+          }
         }
       }
     }

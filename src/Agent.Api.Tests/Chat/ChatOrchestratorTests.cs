@@ -55,7 +55,7 @@ public class ChatOrchestratorTests
             .Setup(x => x.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                null,
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(messages);
 
@@ -159,7 +159,7 @@ public class ChatOrchestratorTests
             .Setup(x => x.BuildMessagesAsync(
                 It.IsAny<Guid>(),
                 request.Message,
-                null,
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .Callback<Guid, string, string?, CancellationToken>(
                 (id, _, _, _) =>
@@ -234,7 +234,7 @@ public class ChatOrchestratorTests
             .Setup(x => x.BuildMessagesAsync(
                 existingConversationId,
                 request.Message,
-                null,
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync(messages);
 
@@ -270,7 +270,7 @@ public class ChatOrchestratorTests
             x => x.BuildMessagesAsync(
                 existingConversationId,
                 request.Message,
-                null,
+                It.IsAny<string>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
