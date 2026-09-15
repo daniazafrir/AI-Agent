@@ -169,10 +169,10 @@ export class ChatStateService {
             );
 
             this.error.set(
-              'Failed to send the message.'
+              error instanceof Error ? error.message : 'אירעה תקלה ביצירת התשובה.'
             );
 
-            this.removeEmptyAssistantMessage();
+            this.markAssistantIncomplete();
           }
         });
   }
@@ -277,7 +277,17 @@ export class ChatStateService {
     );
   }
 
+  private markAssistantIncomplete(): void {
+    this.removeEmptyAssistantMessage();
+    this.messages.update(current => {
+      const last = current.at(-1);
+      if (last?.role !== 'assistant') return current;
+      return [...current.slice(0, -1), { ...last, incomplete: true }];
+    });
+  }
+
   stopGeneration(): void {
+    if (this.isSending()) this.markAssistantIncomplete();
 
     this.streamSubscription
       ?.unsubscribe();

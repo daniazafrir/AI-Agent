@@ -38,6 +38,7 @@ export interface ChatStreamEvent {
 }
 
 export interface ChatMessage {
+  incomplete?: boolean;
   role: 'user' | 'assistant';
   content: string;
   usedTools?: string[];

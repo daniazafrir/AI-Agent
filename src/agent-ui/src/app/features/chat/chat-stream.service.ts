@@ -59,6 +59,13 @@ export class ChatStreamService {
     controller: AbortController
   ): Promise<void> {
 
+    let timedOut = false;
+    let completed = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 120_000);
+
     try {
 
       const response =
@@ -254,26 +261,35 @@ export class ChatStreamService {
     : null
           };
 
+          if (event.type === 'error') {
+            throw new Error(event.content || 'אירעה תקלה ביצירת התשובה. נסו שוב.');
+          }
+          if (event.type === 'completed') {
+            completed = true;
+          }
           observer.next(event);
         }
       }
 
+      if (!completed) {
+        throw new Error('החיבור נותק לפני שהתשובה הושלמה. אפשר לשלוח הודעה חדשה.');
+      }
       observer.complete();
 
     }
     catch (error) {
-
-      if (
-        controller.signal.aborted
-      ) {
+      if (timedOut) {
+        observer.error(new Error('זמן ההמתנה לתשובה הסתיים. נסו שוב.'));
+      } else if (controller.signal.aborted) {
         observer.complete();
-        return;
+      } else {
+        observer.error(error);
       }
-
-      observer.error(error);
+    } finally {
+      clearTimeout(timeout);
+      controller.abort();
     }
   }
-
   stop(): void {
     this.abortController?.abort();
     this.abortController =

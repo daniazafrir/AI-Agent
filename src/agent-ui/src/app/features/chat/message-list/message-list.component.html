@@ -42,6 +42,10 @@
                     {{ message.content }}
                 </div>
 
+                @if (message.incomplete) {
+                    <p role="status">התשובה לא הושלמה</p>
+                }
+
                 @if (message.sources?.length) {
     <div class="sources">
 
