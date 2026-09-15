@@ -12,6 +12,37 @@ public sealed class ToolExecutor(
     : IToolExecutor
 {
     public async Task<ToolExecutionResult> ExecuteAsync(
+        string toolName, BinaryData arguments, CancellationToken cancellationToken = default)
+    {
+        if (!string.Equals(toolName, "search_knowledge", StringComparison.OrdinalIgnoreCase))
+            return await ExecuteCoreAsync(toolName, arguments, cancellationToken);
+
+        try
+        {
+            var result = await ExecuteCoreAsync(toolName, arguments, cancellationToken);
+            using var json = JsonDocument.Parse(result.RawContent);
+            var root = json.RootElement;
+            if ((TryGetPropertyIgnoreCase(root, "success", out var success) &&
+                 success.ValueKind == JsonValueKind.False) ||
+                (TryGetPropertyIgnoreCase(root, "isError", out var error) &&
+                 error.ValueKind == JsonValueKind.True) ||
+                !TryGetPropertyIgnoreCase(root, "matches", out var matches) ||
+                matches.ValueKind != JsonValueKind.Array)
+                throw new KnowledgeSearchUnavailableException();
+            return result;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (KnowledgeSearchUnavailableException) { throw; }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Knowledge search failed.");
+            throw new KnowledgeSearchUnavailableException(exception);
+        }
+    }
+    private async Task<ToolExecutionResult> ExecuteCoreAsync(
         string toolName,
         BinaryData arguments,
         CancellationToken cancellationToken = default)
@@ -293,3 +324,4 @@ public sealed class ToolExecutor(
 
 
 }
+

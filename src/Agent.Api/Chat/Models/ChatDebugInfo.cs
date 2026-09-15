@@ -6,15 +6,20 @@ public sealed class ChatDebugInfo
 
     public string Query { get; init; } = string.Empty;
 
+    public int RawVectorResults { get; init; }
+
+    public int RelevantVectorResults { get; init; }
+
     public int VectorResults { get; init; }
 
     public int KeywordResults { get; init; }
 
     public int MergedResults { get; init; }
 
+    public double MinimumVectorScore { get; init; }
+
     public long SearchTimeMs { get; init; }
 }
-
 public sealed class ChatSourceInfo
 {
     public string DocumentName { get; init; } = string.Empty;

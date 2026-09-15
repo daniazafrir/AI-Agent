@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Agent.Api.Mcp;
 using Agent.Api.Tools;
 using FluentAssertions;
@@ -443,28 +443,11 @@ public sealed class ToolExecutorTests
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new TaskCanceledException("MCP timeout."));
 
-        // Act
-        var result = await _sut.ExecuteAsync(
-            toolName,
-            BinaryData.FromString(
-                """{"query":"vacation days"}"""));
-
-        // Assert
-        using var document = JsonDocument.Parse(result.Content);
-
-        document.RootElement
-            .GetProperty("success")
-            .GetBoolean()
-            .Should()
-            .BeFalse();
-
-        document.RootElement
-            .GetProperty("error")
-            .GetString()
-            .Should()
-            .Be("The MCP tool timed out before returning a result.");
+        var exception = await Assert.ThrowsAsync<KnowledgeSearchUnavailableException>(
+            () => _sut.ExecuteAsync(toolName,
+                BinaryData.FromString("""{"query":"vacation days"}""")));
+        Assert.Equal(KnowledgeSearchUnavailableException.UserMessage, exception.Message);
     }
-
     [Fact]
     public async Task ExecuteAsync_Should_Use_Provided_CancellationToken()
     {
@@ -553,3 +536,4 @@ public sealed class ToolExecutorTests
                && settings["room"] is null;
     }
 }
+

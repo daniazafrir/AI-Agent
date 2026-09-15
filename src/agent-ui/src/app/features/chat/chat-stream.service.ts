@@ -204,39 +204,54 @@ export class ChatStreamService {
               ),
 
             debug:
-              rawDebug
-                ? {
-                    toolName:
-                      rawDebug.toolName ??
-                      rawDebug.ToolName ??
-                      '',
+  rawDebug
+    ? {
+        toolName:
+          rawDebug.toolName ??
+          rawDebug.ToolName ??
+          '',
 
-                    query:
-                      rawDebug.query ??
-                      rawDebug.Query ??
-                      '',
+        query:
+          rawDebug.query ??
+          rawDebug.Query ??
+          '',
 
-                    vectorResults:
-                      rawDebug.vectorResults ??
-                      rawDebug.VectorResults ??
-                      0,
+        rawVectorResults:
+          rawDebug.rawVectorResults ??
+          rawDebug.RawVectorResults ??
+          0,
 
-                    keywordResults:
-                      rawDebug.keywordResults ??
-                      rawDebug.KeywordResults ??
-                      0,
+        relevantVectorResults:
+          rawDebug.relevantVectorResults ??
+          rawDebug.RelevantVectorResults ??
+          0,
 
-                    mergedResults:
-                      rawDebug.mergedResults ??
-                      rawDebug.MergedResults ??
-                      0,
+        vectorResults:
+          rawDebug.vectorResults ??
+          rawDebug.VectorResults ??
+          0,
 
-                    searchTimeMs:
-                      rawDebug.searchTimeMs ??
-                      rawDebug.SearchTimeMs ??
-                      0
-                  }
-                : null
+        keywordResults:
+          rawDebug.keywordResults ??
+          rawDebug.KeywordResults ??
+          0,
+
+        mergedResults:
+          rawDebug.mergedResults ??
+          rawDebug.MergedResults ??
+          0,
+
+        minimumVectorScore:
+          rawDebug.minimumVectorScore ??
+          rawDebug.MinimumVectorScore ??
+          0,
+
+        searchTimeMs:
+          rawDebug.searchTimeMs ??
+          rawDebug.SearchTimeMs ??
+          0
+      }
+    : null
           };
 
           observer.next(event);

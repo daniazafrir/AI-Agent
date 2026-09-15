@@ -89,7 +89,8 @@ public sealed class PostgresKnowledgeChunkRepository(
                     x.ChunkIndex,
                     x.Content,
                     1.0,
-                    SearchEngineType.Keyword
+                    SearchEngineType.Keyword,
+                    null
                 )
 )
             .ToListAsync(

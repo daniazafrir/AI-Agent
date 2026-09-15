@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Agent.Api\Agent.Api.csproj" />
+    <ProjectReference Include="..\Mcp.Tools.Server\Mcp.Tools.Server.csproj" />
   </ItemGroup>
 
   <ItemGroup>

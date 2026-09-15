@@ -22,30 +22,38 @@ public sealed class KnowledgeTools
                 topK,
                 cancellationToken);
 
-        return JsonSerializer.Serialize(
-            new
-            {
-                success = true,
-                query,
+        return JsonSerializer.Serialize(new
+        {
+            success = true,
+            query,
 
-                vectorResults =
-                    result.VectorResults,
+            rawVectorResults =
+        result.RawVectorResults,
 
-                keywordResults =
-                    result.KeywordResults,
+            relevantVectorResults =
+        result.RelevantVectorResults,
 
-                mergedResults =
-                    result.MergedResults,
+            vectorResults =
+        result.VectorResults,
 
-                searchTimeMs =
-                    result.SearchTimeMs,
+            keywordResults =
+        result.KeywordResults,
 
-                matchCount =
-                    result.Matches.Count,
+            mergedResults =
+        result.MergedResults,
 
-                matches =
-                    result.Matches
-            });
+            minimumVectorScore =
+        result.MinimumVectorScore,
+
+            searchTimeMs =
+        result.SearchTimeMs,
+
+            matchCount =
+        result.Matches.Count,
+
+            matches =
+        result.Matches
+        });
     }
 
     [McpServerTool(Name = "delete_vectors")]

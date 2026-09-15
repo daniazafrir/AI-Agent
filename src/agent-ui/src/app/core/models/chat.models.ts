@@ -15,12 +15,18 @@ export interface KnowledgeSource {
 export interface ChatDebugInfo {
   toolName: string;
   query: string;
+
+  rawVectorResults: number;
+  relevantVectorResults: number;
   vectorResults: number;
+
   keywordResults: number;
   mergedResults: number;
+
+  minimumVectorScore: number;
+
   searchTimeMs: number;
 }
-
 export interface ChatStreamEvent {
   type: string;
   content?: string | null;

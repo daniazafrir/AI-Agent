@@ -72,34 +72,49 @@ public sealed class QdrantVectorStore(
     }
 
     public async Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(
-        ReadOnlyMemory<float> queryVector,
-        int topK,
-        CancellationToken cancellationToken = default)
+      ReadOnlyMemory<float> queryVector,
+      int topK,
+      CancellationToken cancellationToken = default)
     {
-        await EnsureCollectionAsync(cancellationToken);
+        await EnsureCollectionAsync(
+            cancellationToken);
 
-        var results = await client.SearchAsync(
-            _options.CollectionName,
-            queryVector,
-            limit: (ulong)topK,
-            payloadSelector: true,
-            cancellationToken: cancellationToken);
+        var results =
+            await client.SearchAsync(
+                _options.CollectionName,
+                queryVector,
+                limit: (ulong)topK,
+                payloadSelector: true,
+                cancellationToken: cancellationToken);
 
-        return results.Select(result =>
-        {
-            var payload = result.Payload;
+        return results
+            .Select(result =>
+            {
+                var payload =
+                    result.Payload;
 
-            return new KnowledgeSearchResult(
-                Guid.Parse(payload["documentId"].StringValue),
-                payload["documentName"].StringValue,
-                (int)payload["chunkIndex"].IntegerValue,
-                payload["content"].StringValue,
-                result.Score,
-                SearchEngineType.Vector // Replace with the correct enum value if needed
-            );
-        }).ToList();
+                var vectorScore =
+                    (double)result.Score;
+
+                return new KnowledgeSearchResult(
+                    Guid.Parse(
+                        payload["documentId"].StringValue),
+                    payload["documentName"].StringValue,
+                    (int)payload["chunkIndex"].IntegerValue,
+                    payload["content"].StringValue,
+
+                    // At this stage Score is still the
+                    // original vector similarity.
+                    vectorScore,
+
+                    SearchEngineType.Vector,
+
+                    // Preserve it separately so RRF
+                    // cannot destroy the original score.
+                    vectorScore);
+            })
+            .ToList();
     }
-
     public async Task DeleteDocumentAsync(
         Guid documentId,
         CancellationToken cancellationToken = default)

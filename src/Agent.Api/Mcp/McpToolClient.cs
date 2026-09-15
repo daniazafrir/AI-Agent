@@ -88,6 +88,10 @@ public sealed class McpToolClient(
             toolName,
             result.IsError);
 
+        if (result.IsError == true &&
+            string.Equals(toolName, "search_knowledge", StringComparison.OrdinalIgnoreCase))
+            throw new Agent.Api.Tools.KnowledgeSearchUnavailableException();
+
         var textParts = result.Content
             .OfType<TextContentBlock>()
             .Select(content => content.Text)
@@ -127,3 +131,4 @@ public sealed class McpToolClient(
             cancellationToken: cancellationToken);
     }
 }
+

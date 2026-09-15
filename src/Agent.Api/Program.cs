@@ -16,6 +16,7 @@ using Agent.Api.OpenAI;
 using Agent.Api.Tools;
 using Agent.Knowledge.Repositories;
 using Agent.Knowledge.Search.Keyword;
+using Mcp.Tools.Server.Features.Rag.Keyword;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;

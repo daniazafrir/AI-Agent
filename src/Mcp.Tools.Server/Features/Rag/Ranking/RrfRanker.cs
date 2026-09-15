@@ -1,5 +1,4 @@
 ﻿using Agent.Knowledge.Search.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Mcp.Tools.Server.Features.Rag.Ranking;
 
@@ -8,21 +7,27 @@ public sealed class RrfRanker
     private const int K = 60;
 
     public IReadOnlyList<KnowledgeSearchResult> Merge(
-     IReadOnlyList<KnowledgeSearchResult> vectorResults,
-     IReadOnlyList<KnowledgeSearchResult> keywordResults,
-     int topK)
+        IReadOnlyList<KnowledgeSearchResult> vectorResults,
+        IReadOnlyList<KnowledgeSearchResult> keywordResults,
+        int topK)
     {
-        Console.WriteLine(
-    $"Vector={vectorResults.Count}, Keyword={keywordResults.Count}");
-
         var scores =
-            new Dictionary<(Guid, int), double>();
+            new Dictionary<(Guid DocumentId, int ChunkIndex), double>();
 
         var results =
-            new Dictionary<(Guid, int), KnowledgeSearchResult>();
+            new Dictionary<
+                (Guid DocumentId, int ChunkIndex),
+                KnowledgeSearchResult>();
 
         var sources =
-            new Dictionary<(Guid, int), HashSet<SearchEngineType>>();
+            new Dictionary<
+                (Guid DocumentId, int ChunkIndex),
+                HashSet<SearchEngineType>>();
+
+        var vectorScores =
+            new Dictionary<
+                (Guid DocumentId, int ChunkIndex),
+                double>();
 
         AddResults(
             vectorResults,
@@ -31,22 +36,6 @@ public sealed class RrfRanker
         AddResults(
             keywordResults,
             SearchEngineType.Keyword);
-
-        Console.WriteLine("VECTOR");
-
-        foreach (var r in vectorResults)
-        {
-            Console.WriteLine(
-                $"{r.DocumentId} {r.ChunkIndex}");
-        }
-
-        Console.WriteLine("KEYWORD");
-
-        foreach (var r in keywordResults)
-        {
-            Console.WriteLine(
-                $"{r.DocumentId} {r.ChunkIndex}");
-        }
 
         return scores
             .OrderByDescending(x => x.Value)
@@ -64,14 +53,29 @@ public sealed class RrfRanker
                         ? SearchEngineType.Hybrid
                         : engines.Single();
 
+                vectorScores.TryGetValue(
+                    x.Key,
+                    out var vectorScore);
+
+                var hasVectorScore =
+                    vectorScores.ContainsKey(
+                        x.Key);
+
                 return new KnowledgeSearchResult(
                     original.DocumentId,
                     original.DocumentName,
                     original.ChunkIndex,
                     original.Content,
+
+                    // Final RRF score
                     x.Value,
-                    searchEngine
-                );
+
+                    searchEngine,
+
+                    // Preserve original Qdrant similarity
+                    hasVectorScore
+                        ? vectorScore
+                        : null);
             })
             .ToList();
 
@@ -79,7 +83,10 @@ public sealed class RrfRanker
             IReadOnlyList<KnowledgeSearchResult> list,
             SearchEngineType engine)
         {
-            for (var rank = 0; rank < list.Count; rank++)
+            for (
+                var rank = 0;
+                rank < list.Count;
+                rank++)
             {
                 var result =
                     list[rank];
@@ -90,18 +97,40 @@ public sealed class RrfRanker
                         result.ChunkIndex
                     );
 
-                var score =
-                    1.0 / (K + rank + 1);
+                var rrfScore =
+                    1.0 /
+                    (K + rank + 1);
 
                 if (!scores.TryAdd(
                         key,
-                        score))
+                        rrfScore))
                 {
-                    scores[key] += score;
+                    scores[key] +=
+                        rrfScore;
                 }
 
-                results[key] =
-                    result;
+                //
+                // Keep one copy of the result.
+                //
+                if (!results.ContainsKey(key))
+                {
+                    results[key] =
+                        result;
+                }
+
+                //
+                // Preserve original vector similarity.
+                //
+                if (engine ==
+                    SearchEngineType.Vector)
+                {
+                    var originalVectorScore =
+                        result.VectorScore ??
+                        result.Score;
+
+                    vectorScores[key] =
+                        originalVectorScore;
+                }
 
                 if (!sources.TryGetValue(
                         key,
@@ -114,7 +143,8 @@ public sealed class RrfRanker
                         engines;
                 }
 
-                engines.Add(engine);
+                engines.Add(
+                    engine);
             }
         }
     }

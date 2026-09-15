@@ -142,7 +142,7 @@ public sealed class RagService(
         logger.LogInformation(
             "Knowledge search returned {ResultCount} unique results. Vector={VectorCount}, Keyword={KeywordCount}, Merged={MergedCount}, Time={SearchTimeMs}ms.",
             uniqueResults.Count,
-            hybridResult.VectorResults,
+            hybridResult.RawVectorResults,
             hybridResult.KeywordResults,
             hybridResult.MergedResults,
             hybridResult.SearchTimeMs);
@@ -159,21 +159,29 @@ public sealed class RagService(
 
         return new RagSearchResult
         {
-            Matches =
-                uniqueResults,
+                Matches = uniqueResults,
 
-            VectorResults =
-                hybridResult.VectorResults,
+                RawVectorResults =
+            hybridResult.RawVectorResults,
 
-            KeywordResults =
-                hybridResult.KeywordResults,
+                RelevantVectorResults =
+            hybridResult.RelevantVectorResults,
 
-            MergedResults =
-                uniqueResults.Count,
+                VectorResults =
+            hybridResult.VectorResults,
 
-            SearchTimeMs =
-                hybridResult.SearchTimeMs
-        };
+                KeywordResults =
+            hybridResult.KeywordResults,
+
+                MergedResults =
+            hybridResult.MergedResults,
+
+                MinimumVectorScore =
+            hybridResult.MinimumVectorScore,
+
+                SearchTimeMs =
+            hybridResult.SearchTimeMs
+            };
     }
 
 

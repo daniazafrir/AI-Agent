@@ -1,0 +1,4 @@
+{
+  "AGENT_E2E_BASE_URL": "http://localhost:5001",
+  "RAG_E2E_DOCUMENT_NAME": "Employee_Handbook_Sample.pdf"
+}

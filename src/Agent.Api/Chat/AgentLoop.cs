@@ -1,4 +1,4 @@
-﻿using Agent.Api.Chat.Models;
+using Agent.Api.Chat.Models;
 using Agent.Api.Configuration;
 using Agent.Api.Features.Conversation;
 using Agent.Api.Mcp;
@@ -27,20 +27,30 @@ public sealed class AgentLoop(
         options.Value;
 
     public async Task<AgentRunResult> RunAsync(
-     AgentContext context,
-     CancellationToken cancellationToken)
+    AgentContext context,
+    CancellationToken cancellationToken)
     {
         await toolRegistry.InitializeAsync(
             cancellationToken);
-
-        var chatOptions =
-            BuildOptions(context);
 
         while (
             context.Round <
             _options.MaxToolRounds)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             context.Round++;
+
+            var chatOptions =
+                BuildOptions(context);
+
+            logger.LogInformation(
+                "Round {Round}. Available tools: {Tools}",
+                context.Round,
+                string.Join(
+                    ", ",
+                    chatOptions.Tools.Select(
+                        x => x.FunctionName)));
 
             var completion =
                 await completionService.CompleteAsync(
@@ -79,18 +89,23 @@ public sealed class AgentLoop(
                 return new AgentRunResult
                 {
                     AssistantMessage =
-        assistantMessage,
+                        assistantMessage,
 
                     UsedTools =
-        context.UsedTools
-            .Distinct(
-                StringComparer.OrdinalIgnoreCase)
-            .ToList(),
+                        context.UsedTools
+                            .Distinct(
+                                StringComparer.OrdinalIgnoreCase)
+                            .ToList(),
 
                     Sources =
-        context.Sources
-            .DistinctBy(x => x.DocumentName)
-            .ToList()
+                        context.Sources
+                            .DistinctBy(
+                                x => new
+                                {
+                                    x.DocumentName,
+                                    x.ChunkIndex
+                                })
+                            .ToList()
                 };
             }
 
@@ -101,7 +116,6 @@ public sealed class AgentLoop(
         throw new InvalidOperationException(
             $"Agent exceeded the maximum number of {_options.MaxToolRounds} rounds.");
     }
-
     public async IAsyncEnumerable<ChatStreamEvent> RunStreamingAsync(
     AgentContext context,
     [System.Runtime.CompilerServices.EnumeratorCancellation]
@@ -112,8 +126,9 @@ public sealed class AgentLoop(
         await toolRegistry.InitializeAsync(
             cancellationToken);
 
-        var chatOptions =
-            BuildOptions(context);
+        var executedToolCalls =
+    new HashSet<string>(
+        StringComparer.Ordinal);
 
         yield return new ChatStreamEvent
         {
@@ -126,9 +141,8 @@ public sealed class AgentLoop(
 
             context.Round++;
 
-
-            chatOptions.ToolChoice =
-    ChatToolChoice.CreateAutoChoice();
+            var chatOptions =
+                BuildOptions(context);
 
             var finishReason =
                 ChatFinishReason.Stop;
@@ -300,6 +314,38 @@ public sealed class AgentLoop(
                     cancellationToken
                         .ThrowIfCancellationRequested();
 
+                    var toolCallKey =
+    CreateToolCallKey(
+        toolCall.FunctionName,
+        toolCall.FunctionArguments);
+
+                    if (!executedToolCalls.Add(toolCallKey))
+                    {
+                        logger.LogWarning(
+                            "Duplicate tool call blocked. Tool: {Tool}, Arguments: {Arguments}",
+                            toolCall.FunctionName,
+                            toolCall.FunctionArguments);
+
+                        context.Messages.Add(
+                            new ToolChatMessage(
+                                toolCall.Id,
+                                """
+            {
+              "success": false,
+              "error": "This exact tool call was already executed. Do not repeat it. Use the previous tool result and provide the final answer."
+            }
+            """));
+
+                        yield return new ChatStreamEvent
+                        {
+                            Type = "tool-completed",
+                            ToolName = toolCall.FunctionName
+                        };
+
+                        continue;
+                    }
+                  
+
                     yield return new ChatStreamEvent
                     {
                         Type = "tool-started",
@@ -383,13 +429,18 @@ public sealed class AgentLoop(
     }
 
     private static ChatDebugInfo ExtractDebugInfo(
-    string rawContent,
-    BinaryData functionArguments)
+     string rawContent,
+     BinaryData functionArguments)
     {
         var query = string.Empty;
+
+        var rawVectorResults = 0;
+        var relevantVectorResults = 0;
         var vectorResults = 0;
         var keywordResults = 0;
         var mergedResults = 0;
+
+        var minimumVectorScore = 0.0;
         var searchTimeMs = 0L;
 
         try
@@ -412,6 +463,22 @@ public sealed class AgentLoop(
 
             var root =
                 resultDocument.RootElement;
+
+            if (root.TryGetProperty(
+                "rawVectorResults",
+                out var rawVectorElement))
+            {
+                rawVectorResults =
+                    rawVectorElement.GetInt32();
+            }
+
+            if (root.TryGetProperty(
+                "relevantVectorResults",
+                out var relevantVectorElement))
+            {
+                relevantVectorResults =
+                    relevantVectorElement.GetInt32();
+            }
 
             if (root.TryGetProperty(
                 "vectorResults",
@@ -438,6 +505,14 @@ public sealed class AgentLoop(
             }
 
             if (root.TryGetProperty(
+                "minimumVectorScore",
+                out var minimumVectorScoreElement))
+            {
+                minimumVectorScore =
+                    minimumVectorScoreElement.GetDouble();
+            }
+
+            if (root.TryGetProperty(
                 "searchTimeMs",
                 out var timeElement))
             {
@@ -454,28 +529,47 @@ public sealed class AgentLoop(
         {
             ToolName = "search_knowledge",
             Query = query,
+
+            RawVectorResults = rawVectorResults,
+            RelevantVectorResults = relevantVectorResults,
             VectorResults = vectorResults,
+
             KeywordResults = keywordResults,
             MergedResults = mergedResults,
+
+            MinimumVectorScore = minimumVectorScore,
+
             SearchTimeMs = searchTimeMs
         };
     }
     private ChatCompletionOptions BuildOptions(
     AgentContext context)
     {
-        var options =
-            new ChatCompletionOptions
-            {
-                ToolChoice =
-                    ChatToolChoice.CreateAutoChoice()
-            };
+        var selectedTools =
+            toolRouter.SelectTools(context.Messages);
 
-        foreach (var tool in
-                 toolRouter.SelectTools(
-                     context.Messages))
+        var options =
+            new ChatCompletionOptions();
+
+        foreach (var tool in selectedTools)
         {
             options.Tools.Add(tool);
         }
+
+        if (selectedTools.Count > 0)
+        {
+            options.ToolChoice =
+                ChatToolChoice.CreateAutoChoice();
+        }
+
+        logger.LogInformation(
+            "Round {Round}. Available tools: {Tools}",
+            context.Round,
+            selectedTools.Count == 0
+                ? "(none)"
+                : string.Join(
+                    ", ",
+                    selectedTools.Select(x => x.FunctionName)));
 
         return options;
     }
@@ -491,7 +585,7 @@ public sealed class AgentLoop(
             new();
     }
 
-    private static void ExtractSources(
+    internal static void ExtractSources(
     string result,
     ICollection<KnowledgeSource> sources)
     {
@@ -579,4 +673,33 @@ public sealed class AgentLoop(
         value = default;
         return false;
     }
+
+    private static string CreateToolCallKey(
+    string toolName,
+    BinaryData arguments)
+    {
+        var normalizedArguments =
+            NormalizeJson(arguments.ToString());
+
+        return
+            $"{toolName.ToLowerInvariant()}:{normalizedArguments}";
+    }
+
+    private static string NormalizeJson(
+        string json)
+    {
+        try
+        {
+            using var document =
+                JsonDocument.Parse(json);
+
+            return JsonSerializer.Serialize(
+                document.RootElement);
+        }
+        catch (JsonException)
+        {
+            return json.Trim();
+        }
+    }
 }
+

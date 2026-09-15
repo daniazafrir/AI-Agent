@@ -1,11 +1,14 @@
 ﻿using Agent.Knowledge.Infrastructure.Persistence;
+using Agent.Knowledge.Search.Keyword;
 using Agent.Knowledge.Search.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace Agent.Knowledge.Search.Keyword;
+namespace Mcp.Tools.Server.Features.Rag.Keyword;
 
 public sealed class KeywordSearchService(
-    AgentDbContext dbContext)
+    AgentDbContext dbContext,
+    ILogger<KeywordSearchService> logger)
     : IKeywordSearchService
 {
     public async Task<IReadOnlyList<KnowledgeSearchResult>> SearchAsync(
@@ -20,28 +23,62 @@ public sealed class KeywordSearchService(
 
         query = query.Trim();
 
-        return await dbContext.KnowledgeChunks
-            .AsNoTracking()
-            .Include(x => x.Document)
-            .Where(x =>
-                EF.Functions
-                    .ToTsVector(
-                        "english",
-                        x.Content)
-                    .Matches(
-                        EF.Functions
-                            .WebSearchToTsQuery(
+        var results =
+            await dbContext.KnowledgeChunks
+                .AsNoTracking()
+                .Where(x =>
+                    EF.Functions
+                        .ToTsVector(
+                            "english",
+                            x.Content)
+                        .Matches(
+                            EF.Functions.WebSearchToTsQuery(
                                 "english",
                                 query)))
-            .Take(topK)
-            .Select(x =>
-                new KnowledgeSearchResult(
+                .Select(x => new
+                {
                     x.DocumentId,
-                    x.Document!.FileName,
+                    DocumentName = x.Document!.FileName,
                     x.ChunkIndex,
                     x.Content,
-                    1.0,
-                    SearchEngineType.Keyword))
-            .ToListAsync(cancellationToken);
+
+                    Rank =
+                        EF.Functions
+                            .ToTsVector(
+                                "english",
+                                x.Content)
+                            .Rank(
+                                EF.Functions.WebSearchToTsQuery(
+                                    "english",
+                                    query))
+                })
+                .OrderByDescending(x => x.Rank)
+                .Take(topK)
+                .Select(x =>
+                    new KnowledgeSearchResult(
+                        x.DocumentId,
+                        x.DocumentName,
+                        x.ChunkIndex,
+                        x.Content,
+                        x.Rank,
+                        SearchEngineType.Keyword,
+                        null))
+                .ToListAsync(cancellationToken);
+
+        logger.LogInformation(
+            "Keyword search completed. Query={Query}, Results={Count}",
+            query,
+            results.Count);
+
+        foreach (var result in results)
+        {
+            logger.LogInformation(
+                "Keyword result. Document={Document}, Chunk={Chunk}, Score={Score}",
+                result.DocumentName,
+                result.ChunkIndex,
+                result.Score);
+        }
+
+        return results;
     }
 }

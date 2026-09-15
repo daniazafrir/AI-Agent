@@ -1,4 +1,4 @@
-﻿using Agent.Api.Chat.Models;
+using Agent.Api.Chat.Models;
 using Agent.Api.Tools;
 using OpenAI.Chat;
 using System.Runtime.CompilerServices;
@@ -95,6 +95,10 @@ public sealed class ToolProcessor(
                 context.UsedTools.Add(tool.Name);
             }
 
+            if (string.Equals(tool.Name, "search_knowledge", StringComparison.OrdinalIgnoreCase))
+            {
+                AgentLoop.ExtractSources(result.RawContent, context.Sources);
+            }
             context.Messages.Add(
                 new ToolChatMessage(
                     tool.Id,

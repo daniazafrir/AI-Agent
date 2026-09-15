@@ -1,3 +1,4 @@
+using Agent.Api.Tools;
 using Agent.Api.Chat;
 using Agent.Api.Chat.Models;
 using Agent.Api.Contracts;
@@ -74,7 +75,9 @@ public sealed class ChatController(
                     new ChatStreamEvent
                     {
                         Type = "error",
-                        Content = "The chat stream failed unexpectedly."
+                        Content = exception is KnowledgeSearchUnavailableException
+                            ? KnowledgeSearchUnavailableException.UserMessage
+                            : "The chat stream failed unexpectedly."
                     },
                     HttpContext.RequestAborted);
             }
@@ -94,3 +97,4 @@ public sealed class ChatController(
         await Response.Body.FlushAsync(cancellationToken);
     }
 }
+
