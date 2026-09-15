@@ -1,42 +1,65 @@
-name: .NET CI
+name: CI
 
 on:
   push:
-    branches:
-      - main
-
   pull_request:
-    branches:
-      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-test:
+  unit-tests:
+    name: .NET unit tests
     runs-on: ubuntu-latest
-
+    timeout-minutes: 15
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 8
+      - uses: actions/checkout@v4
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
-
-      - name: Restore dependencies
-        run: dotnet restore AgentAssistant.sln
-
-      - name: Build solution
-        run: dotnet build AgentAssistant.sln --configuration Release --no-restore
-
-      - name: Run tests with coverage
-        run: >
-          dotnet test AgentAssistant.sln
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: Restore unit test dependencies
+        run: dotnet restore src/Agent.Api.Tests/Agent.Api.Tests.csproj
+      - name: Run unit tests with coverage
+        run: >-
+          dotnet test src/Agent.Api.Tests/Agent.Api.Tests.csproj
           --configuration Release
-          --no-build
+          --no-restore
+          --logger "trx;LogFileName=unit-tests.trx"
           --collect:"XPlat Code Coverage"
-
-      - name: Upload coverage report
+          --results-directory TestResults
+      - name: Upload test results and coverage
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: code-coverage
-          path: "**/TestResults/**/coverage.cobertura.xml"
+          name: unit-test-results
+          path: TestResults/
+          if-no-files-found: warn
+          retention-days: 14
+
+  angular-build:
+    name: Angular production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: src/agent-ui
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: src/agent-ui/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build Angular
+        run: npm run build
