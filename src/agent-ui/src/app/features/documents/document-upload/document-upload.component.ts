@@ -44,39 +44,64 @@ export class DocumentUploadComponent {
   readonly selectedFile =
     signal<File | null>(null);
 
+  readonly isDragging = signal(false);
+  private dragDepth = 0;
+
   selectFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!this.state.uploading()) this.acceptFiles(input.files);
+    input.value = '';
+  }
 
-    const input =
-      event.target as HTMLInputElement;
+  onDragEnter(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.state.uploading() || !event.dataTransfer?.types.includes('Files')) return;
+    this.dragDepth++;
+    this.isDragging.set(true);
+  }
 
-    const file =
-      input.files?.[0] ?? null;
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = this.state.uploading() ? 'none' : 'copy';
+    }
+  }
 
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragDepth = Math.max(0, this.dragDepth - 1);
+    if (this.dragDepth === 0) this.isDragging.set(false);
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.dragDepth = 0;
+    this.isDragging.set(false);
+    if (!this.state.uploading()) this.acceptFiles(event.dataTransfer?.files ?? null);
+  }
+
+  private acceptFiles(files: FileList | null): void {
+    if (!files?.length) return;
     this.state.success.set(null);
     this.state.error.set(null);
     this.state.progress.set(0);
+    this.selectedFile.set(null);
 
-    if (!file) {
-      this.selectedFile.set(null);
+    if (files.length !== 1) {
+      this.state.error.set('Please select one file at a time.');
       return;
     }
-
+    const file = files[0];
     if (!this.isValidFile(file)) {
-
-      this.state.error.set(
-  'Only TXT or PDF files up to 2MB are supported.'
-);
-
-      this.selectedFile.set(null);
-
-      input.value = '';
-
+      this.state.error.set('Only TXT or PDF files up to 2MB are supported.');
       return;
     }
-
     this.selectedFile.set(file);
   }
-
   upload(): void {
 
     const file =

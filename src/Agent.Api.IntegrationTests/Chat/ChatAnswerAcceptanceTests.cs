@@ -8,7 +8,7 @@ using Xunit;
 namespace Agent.Api.IntegrationTests.Chat;
 
 [Trait("Category", "EndToEnd")]
-public sealed class ChatAnswerAcceptanceTests
+public sealed partial class ChatAnswerAcceptanceTests
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -255,9 +255,3 @@ public sealed class ChatAnswerAcceptanceTests
         public Source[]? Sources { get; set; }
     }
 }
-
-
-
-
-
-

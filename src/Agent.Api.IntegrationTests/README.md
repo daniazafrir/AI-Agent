@@ -102,3 +102,27 @@ Run these four cases:
     dotnet test src/Agent.Api.IntegrationTests/Agent.Api.IntegrationTests.csproj --filter "FullyQualifiedName~Conversation_"
 
 The project now contains 20 cases: 10 RAG and 10 EndToEnd.
+
+## Two-document regression suite (10 additional cases)
+
+Both JSON and SSE are checked for five independent questions:
+meals (45 USD per person per day), submission (14 calendar days after the trip),
+payment (10 business days after finance approval), undefined mileage rate,
+and vacation (19 days after one year).
+
+Both Employee_Handbook_Sample.pdf and Business_Travel_Reimbursement_Test.txt
+must be indexed. Override the names with RAG_E2E_DOCUMENT_NAME and
+RAG_E2E_TRAVEL_DOCUMENT_NAME if necessary.
+
+Every case requires search_knowledge and a source in the appropriate document.
+The test also fetches the cited chunks and checks that they contain the expected
+facts. Extra retrieved sources are allowed. The mileage case allows a citation
+to the explicit missing-information clause, but rejects numeric/currency answers.
+These English text-pattern checks are regression checks, not full semantic grading.
+
+Run just this suite:
+    dotnet test src/Agent.Api.IntegrationTests/Agent.Api.IntegrationTests.csproj --filter "Scenario=MultiDocument"
+
+This adds 10 cases, bringing the project to 30 integration cases (10 direct RAG,
+20 HTTP EndToEnd). Fresh conversation IDs are used; test conversations remain
+in the database and real model/embedding calls incur normal usage.

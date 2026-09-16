@@ -158,6 +158,14 @@ public sealed class ToolRouter(
                 "benefit",
                 "benefits",
 
+                // Business travel and expense policies
+                "business travel",
+                "business trip",
+                "reimbursement",
+                "travel claim",
+                "expense claim",
+                "meal allowance",
+
                 // Working conditions
                 "working hours",
                 "work hours",
@@ -210,3 +218,4 @@ public sealed class ToolRouter(
             question.Contains("today's date");
     }
 }
+

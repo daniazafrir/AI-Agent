@@ -60,7 +60,7 @@ public sealed class AgentLoop(
 
             if (
                 completion.FinishReason ==
-                ChatFinishReason.ToolCalls)
+                ChatFinishReason.ToolCalls || (completion.FinishReason == ChatFinishReason.Stop && completion.ToolCalls.Count > 0))
             {
                 if (completion.ToolCalls.Count == 0)
                 {
@@ -239,6 +239,10 @@ public sealed class AgentLoop(
                 }
             }
 
+            logger.LogInformation(
+                "Streaming round {Round}: FinishReason={FinishReason}, ToolCalls={ToolCallCount}",
+                context.Round, finishReason, toolCallBuilders.Count);
+
             if (!hasFinishReason)
             {
                 throw new InvalidOperationException(
@@ -248,7 +252,7 @@ public sealed class AgentLoop(
             //
             // final assistant answer
             //
-            if (finishReason == ChatFinishReason.Stop)
+            if (finishReason == ChatFinishReason.Stop && toolCallBuilders.Count == 0)
             {
                 yield return new ChatStreamEvent
                 {
@@ -278,7 +282,7 @@ public sealed class AgentLoop(
             //
             // tool calls
             //
-            if (finishReason == ChatFinishReason.ToolCalls)
+            if (finishReason == ChatFinishReason.ToolCalls || (finishReason == ChatFinishReason.Stop && toolCallBuilders.Count > 0))
             {
                 if (toolCallBuilders.Count == 0)
                 {
@@ -559,7 +563,10 @@ public sealed class AgentLoop(
         if (selectedTools.Count > 0)
         {
             options.ToolChoice =
-                ChatToolChoice.CreateAutoChoice();
+                selectedTools.Any(tool => tool.FunctionName == "search_knowledge") &&
+                !context.UsedTools.Contains("search_knowledge", StringComparer.OrdinalIgnoreCase)
+                    ? ChatToolChoice.CreateFunctionChoice("search_knowledge")
+                    : ChatToolChoice.CreateAutoChoice();
         }
 
         logger.LogInformation(
@@ -702,4 +709,7 @@ public sealed class AgentLoop(
         }
     }
 }
+
+
+
 

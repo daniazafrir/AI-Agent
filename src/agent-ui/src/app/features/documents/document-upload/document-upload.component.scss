@@ -88,3 +88,7 @@
 .error-message {
   color: var(--color-danger);
 }
+.upload-card.drag-active {
+  border-color: var(--color-primary);
+  background: #f0f3ff;
+}
