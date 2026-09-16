@@ -75,6 +75,8 @@ public sealed partial class ChatAnswerAcceptanceTests
             string.Equals(source.DocumentName, documentName, StringComparison.OrdinalIgnoreCase)).ToList();
         Assert.True(sources.Count > 0,
             $"Expected source {documentName}; received: {string.Join(", ", reply.Sources.Select(s => s.DocumentName))}");
+        Assert.Equal(documentName, reply.Sources[0].DocumentName,
+            ignoreCase: true);
 
         // Validate the actual cited chunks, not just the source file name.
         using var client = new HttpClient
