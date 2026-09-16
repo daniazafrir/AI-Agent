@@ -126,3 +126,27 @@ Run just this suite:
 This adds 10 cases, bringing the project to 30 integration cases (10 direct RAG,
 20 HTTP EndToEnd). Fresh conversation IDs are used; test conversations remain
 in the database and real model/embedding calls incur normal usage.
+
+## Document lifecycle (1 additional EndToEnd case)
+
+Run only the lifecycle case:
+    dotnet test src/Agent.Api.IntegrationTests/Agent.Api.IntegrationTests.csproj --filter "Scenario=DocumentLifecycle"
+
+This case uploads a uniquely named temporary TXT policy, uploads identical content
+again, deletes it, and uploads new content under the same file name. It verifies:
+- One document ID, one persisted chunk and one Qdrant point after duplicate upload.
+- Document/chunk absence through PostgreSQL-backed API endpoints and zero Qdrant
+  points after deletion.
+- New content and a new ID after explicit delete-and-upload replacement.
+- Fresh chat answers cite the correct version, and the old value disappears.
+It does not assert that uploading changed content automatically replaces a file.
+
+Requires the running API/MCP/embedding services and Qdrant REST access.
+RAG_E2E_QDRANT_URL defaults to http://localhost:6333 and
+RAG_E2E_QDRANT_COLLECTION to agent_documents in testsettings.json.
+Both must refer to the same Qdrant collection used by the running MCP.
+The current local test assumes Qdrant REST does not require authentication.
+
+Only documents with this run's unique Lifecycle_<guid>.txt name are deleted.
+Cleanup runs in finally; a terminated test process can leave a temporary document.
+Chat records remain. Do not run against production. This suite now has 31 cases.

@@ -1,5 +1,7 @@
 {
   "AGENT_E2E_BASE_URL": "http://localhost:5001",
   "RAG_E2E_DOCUMENT_NAME": "Employee_Handbook_Sample.pdf",
-  "RAG_E2E_TRAVEL_DOCUMENT_NAME": "Business_Travel_Reimbursement_Test.txt"
+  "RAG_E2E_TRAVEL_DOCUMENT_NAME": "Business_Travel_Reimbursement_Test.txt",
+  "RAG_E2E_QDRANT_URL": "http://localhost:6333",
+  "RAG_E2E_QDRANT_COLLECTION": "agent_documents"
 }
