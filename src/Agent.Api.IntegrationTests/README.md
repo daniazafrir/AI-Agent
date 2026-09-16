@@ -150,3 +150,12 @@ The current local test assumes Qdrant REST does not require authentication.
 Only documents with this run's unique Lifecycle_<guid>.txt name are deleted.
 Cleanup runs in finally; a terminated test process can leave a temporary document.
 Chat records remain. Do not run against production. This suite now has 31 cases.
+
+## Performance baseline
+
+Run the latency guardrail with:
+    dotnet test src/Agent.Api.IntegrationTests/Agent.Api.IntegrationTests.csproj --filter "Scenario=Performance"
+
+It measures one normal JSON response and one SSE response for the vacation query,
+prints both elapsed times, and fails only when either request exceeds 120 seconds.
+This is an operational stuck-request check, not a hardware benchmark.
