@@ -58,6 +58,11 @@
         </span>
         <span class="metric-label">Merged</span>
       </div>
+
+      <div class="metric-card">
+        <span class="metric-value">{{ sourceCount() }}</span>
+        <span class="metric-label">Sources</span>
+      </div>
     </div>
   </section>
 
@@ -78,84 +83,6 @@
       </span>
     </div>
   </section>
-  <mat-divider />
-
-  <section class="debug-section">
-
-    <h4>Search</h4>
-
-    <div class="metric-grid">
-
-      <div class="metric-card">
-        <span class="metric-value">
-          {{ info.rawVectorResults }}
-        </span>
-
-        <span class="metric-label">
-          Raw Vector
-        </span>
-      </div>
-
-      <div class="metric-card">
-        <span class="metric-value">
-          {{ info.relevantVectorResults }}
-        </span>
-
-        <span class="metric-label">
-          Relevant Vector
-        </span>
-      </div>
-
-      <div class="metric-card">
-        <span class="metric-value">
-          {{ info.keywordResults }}
-        </span>
-
-        <span class="metric-label">
-          Keyword
-        </span>
-      </div>
-
-      <div class="metric-card">
-        <span class="metric-value">
-          {{ info.mergedResults }}
-        </span>
-
-        <span class="metric-label">
-          Merged
-        </span>
-      </div>
-
-    </div>
-
-  </section>
-
-  <mat-divider />
-
-  <section class="debug-section">
-
-    <div class="debug-row">
-      <span class="label">
-        Minimum vector score
-      </span>
-
-      <span class="value">
-        {{ info.minimumVectorScore }}
-      </span>
-    </div>
-
-    <div class="debug-row">
-      <span class="label">
-        Search time
-      </span>
-
-      <span class="value">
-        {{ info.searchTimeMs }} ms
-      </span>
-    </div>
-
-  </section>
-
   } @else {
 
   <div class="empty-content">

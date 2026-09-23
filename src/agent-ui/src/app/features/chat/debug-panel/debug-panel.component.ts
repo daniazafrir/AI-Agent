@@ -29,6 +29,8 @@ export class DebugPanelComponent {
   readonly debug =
     input<ChatDebugInfo | null>(null);
 
+  readonly sourceCount = input(0);
+
   readonly collapsed = input(false);
   readonly collapsedChange = output<boolean>();
 

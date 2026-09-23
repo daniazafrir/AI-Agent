@@ -67,6 +67,7 @@
 </main>
 <app-debug-panel
     [debug]="state.debugInfo()"
+    [sourceCount]="state.messages().at(-1)?.sources?.length ?? 0"
     [collapsed]="isDebugCollapsed()"
     (collapsedChange)="setDebugCollapsed($event)"
   />
