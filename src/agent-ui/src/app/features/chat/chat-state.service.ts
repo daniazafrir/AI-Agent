@@ -16,12 +16,17 @@ import {
 } from 'src/app/core/models/chat.models';
 
 import { ChatStreamService } from './chat-stream.service';
+import { ChatRequestMetric } from './chat-request-metric';
 import { ConversationDetails } from '../conversations/conversation-api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ChatStateService {
+  private requestSequence = 0;
+  private readonly metrics = signal<ChatRequestMetric[]>([]);
+  readonly requestHistory = this.metrics.asReadonly();
+  private finishActiveRequest: (() => void) | null = null;
 
   private readonly chatStream =
     inject(ChatStreamService);
@@ -67,6 +72,27 @@ export class ChatStateService {
       return;
     }
 
+    const started = performance.now();
+    const metric: ChatRequestMetric = {
+      id: ++this.requestSequence,
+      question: text,
+      startedAt: Date.now(),
+      firstTextMs: null,
+      totalMs: 0,
+      searchMs: null,
+      sourceCount: null,
+      status: 'cancelled'
+    };
+    let recorded = false;
+    const record = () => {
+      if (recorded) return;
+      recorded = true;
+      metric.totalMs = Math.round(performance.now() - started);
+      this.metrics.update(history => [{ ...metric }, ...history].slice(0, 20));
+      this.finishActiveRequest = null;
+    };
+    this.finishActiveRequest = record;
+
     this.error.set(null);
     this.activeTool.set(null);
     this.debugInfo.set(null);
@@ -84,7 +110,7 @@ export class ChatStateService {
       sources: []
     });
 
-    this.streamSubscription =
+    const subscription =
       this.chatStream
         .stream({
           message: text,
@@ -93,6 +119,7 @@ export class ChatStateService {
         })
         .pipe(
           finalize(() => {
+            record();
             this.isSending.set(false);
             this.activeTool.set(null);
             this.streamSubscription = null;
@@ -122,6 +149,7 @@ export class ChatStateService {
               case 'content':
 
                 if (event.content) {
+                  metric.firstTextMs ??= Math.round(performance.now() - started);
 
                   this.appendAssistantContent(
                     event.content
@@ -145,6 +173,9 @@ export class ChatStateService {
                 break;
 
               case 'completed':
+                metric.status = 'completed';
+                metric.searchMs = event.debug?.searchTimeMs ?? null;
+                metric.sourceCount = event.sources?.length ?? 0;
 
                 this.setAssistantMetadata(
                   event.usedTools ?? [],
@@ -162,6 +193,7 @@ export class ChatStateService {
           },
 
           error: error => {
+            metric.status = 'failed';
 
             console.error(
               'Chat streaming failed.',
@@ -175,6 +207,7 @@ export class ChatStateService {
             this.markAssistantIncomplete();
           }
         });
+    this.streamSubscription = subscription.closed ? null : subscription;
   }
 
   private setAssistantMetadata(
@@ -288,6 +321,7 @@ export class ChatStateService {
 
   stopGeneration(): void {
     if (this.isSending()) this.markAssistantIncomplete();
+    this.finishActiveRequest?.();
 
     this.streamSubscription
       ?.unsubscribe();

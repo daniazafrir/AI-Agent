@@ -9,6 +9,12 @@ public sealed class ConversationService(
     private const string UserRole = "user";
     private const string AssistantRole = "assistant";
 
+    public Task SaveUserMessageAsync(Guid conversationId, string message, CancellationToken cancellationToken = default)
+        => conversationStore.AddMessageAsync(conversationId, UserRole, message, cancellationToken);
+
+    public Task SaveAssistantMessageAsync(Guid conversationId, string message, CancellationToken cancellationToken = default)
+        => conversationStore.AddMessageAsync(conversationId, AssistantRole, message, cancellationToken);
+
     public async Task<List<ChatMessage>> BuildMessagesAsync(
     Guid conversationId,
     string currentUserMessage,

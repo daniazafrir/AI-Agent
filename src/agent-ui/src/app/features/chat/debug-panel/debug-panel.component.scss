@@ -147,7 +147,7 @@
   align-items: center;
 
   gap: 12px;
-  min-height: calc(100% - 48px);
+  padding: 16px 0;
 
   text-align: center;
 
@@ -160,3 +160,13 @@
     display: none;
   }
 }
+.request-history { padding-top: 16px; }
+.history-note { font-size: 12px; color: #555; line-height: 1.5; }
+.request-card { margin: 12px 0; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 10px; }
+.request-heading { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; }
+.request-status { font-weight: 600; }
+.request-status.failed { color: #b42318; }
+.request-question { font-size: 13px; overflow-wrap: anywhere; max-height: 4.5em; overflow-y: auto; line-height: 1.5; }
+.request-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 0; }
+.request-times dt { font-size: 11px; color: #555; }
+.request-times dd { margin: 4px 0 0; font-size: 13px; text-align: start; }

@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  effect,
   inject,
   OnInit,
   signal
@@ -42,6 +43,15 @@ export class SidebarComponent implements OnInit {
 
   readonly error =
     signal<string | null>(null);
+
+  constructor() {
+    effect(() => {
+      // The server emits the ID only after the user message has been saved.
+      const id = this.chatState.activeConversationId();
+      this.chatState.requestHistory();
+      if (id) this.loadConversations();
+    });
+  }
 
   ngOnInit(): void {
     this.loadConversations();

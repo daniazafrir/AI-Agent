@@ -8,6 +8,8 @@ import {
 } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
+import { DatePipe } from '@angular/common';
+import { ChatRequestMetric } from '../chat-request-metric';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { ChatDebugInfo } from 'src/app/core/models/chat.models';
@@ -16,6 +18,7 @@ import { ChatDebugInfo } from 'src/app/core/models/chat.models';
   selector: 'app-debug-panel',
   standalone: true,
   imports: [
+    DatePipe,
     MatIconModule,
     MatDividerModule
   ],
@@ -25,6 +28,15 @@ import { ChatDebugInfo } from 'src/app/core/models/chat.models';
     ChangeDetectionStrategy.OnPush
 })
 export class DebugPanelComponent {
+  readonly history = input<readonly ChatRequestMetric[]>([]);
+
+  duration(value: number | null): string {
+    return value === null ? '—' : `${Math.round(value)} ms`;
+  }
+
+  statusLabel(status: ChatRequestMetric['status']): string {
+    return { completed: 'הושלמה', cancelled: 'נעצרה', failed: 'נכשלה' }[status];
+  }
 
   readonly debug =
     input<ChatDebugInfo | null>(null);

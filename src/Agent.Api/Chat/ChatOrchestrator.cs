@@ -265,12 +265,6 @@ Always answer in the same language as the user's latest message.
             request.ConversationId
             ?? Guid.NewGuid();
 
-        yield return new ChatStreamEvent
-        {
-            Type = "conversation",
-            ConversationId = conversationId
-        };
-
         var messages =
             await conversationService.BuildMessagesAsync(
                 conversationId,
@@ -281,54 +275,48 @@ Always answer in the same language as the user's latest message.
         var assistantText =
             new System.Text.StringBuilder();
 
-        var usedTools =
-            new List<string>();
-
-        await foreach (
-            var streamEvent in
-                agentRuntime.RunStreamingAsync(
-                    messages,
-                    cancellationToken))
+        // Persist the question before acknowledging it to the client.
+        await conversationService.SaveUserMessageAsync(conversationId, request.Message, cancellationToken);
+        var completed = false;
+        try
         {
-            if (
-                streamEvent.Type == "content" &&
-                !string.IsNullOrEmpty(
-                    streamEvent.Content))
+            yield return new ChatStreamEvent
             {
-                assistantText.Append(
-                    streamEvent.Content);
-            }
+                Type = "conversation",
+                ConversationId = conversationId
+            };
 
-            if (
-                streamEvent.UsedTools is not null)
+            await foreach (
+                var streamEvent in agentRuntime.RunStreamingAsync(messages, cancellationToken))
             {
-                usedTools.AddRange(
-                    streamEvent.UsedTools);
-            }
+                if (streamEvent.Type == "content" && !string.IsNullOrEmpty(streamEvent.Content))
+                    assistantText.Append(streamEvent.Content);
 
-            if (streamEvent.Type == "completed")
-            {
-                logger.LogInformation(
-                    "Completed stream event. UsedTools: {UsedToolsCount}, Sources: {SourcesCount}",
-                    streamEvent.UsedTools?.Count ?? 0,
-                    streamEvent.Sources?.Count ?? 0);
-            }
+                if (streamEvent.Type == "completed")
+                {
+                    completed = true;
+                    logger.LogInformation(
+                        "Completed stream event. UsedTools: {UsedToolsCount}, Sources: {SourcesCount}",
+                        streamEvent.UsedTools?.Count ?? 0,
+                        streamEvent.Sources?.Count ?? 0);
+                }
 
-            yield return streamEvent;
+                yield return streamEvent;
+            }
         }
-
-        var finalAssistantMessage =
-            assistantText.ToString();
-
-        if (!string.IsNullOrWhiteSpace(
-                finalAssistantMessage))
+        finally
         {
-            await conversationService
-                .SaveConversationAsync(
-                    conversationId,
-                    request.Message,
-                    finalAssistantMessage,
-                    cancellationToken);
+            var finalAssistantMessage = assistantText.ToString();
+            if (!completed)
+                finalAssistantMessage = (finalAssistantMessage + "\n\n[התשובה לא הושלמה]").Trim();
+
+            if (!string.IsNullOrWhiteSpace(finalAssistantMessage))
+            {
+                // RequestAborted is already cancelled when Stop closes the stream.
+                using var saveTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                await conversationService.SaveAssistantMessageAsync(
+                    conversationId, finalAssistantMessage, saveTimeout.Token);
+            }
         }
     }
 

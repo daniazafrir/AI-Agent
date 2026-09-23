@@ -90,6 +90,29 @@
   </div>
 
   }
+
+  <mat-divider />
+  <section class="request-history" dir="rtl">
+    <h4>בקשות אחרונות ({{ history().length }}/20)</h4>
+    <p class="history-note">החדשה ביותר בראש הרשימה. ההיסטוריה מתאפסת ברענון הדף. זמן החיפוש מתייחס לחיפוש האחרון שדווח.</p>
+    @for (request of history(); track request.id) {
+      <article class="request-card">
+        <div class="request-heading">
+          <time>{{ request.startedAt | date:'HH:mm:ss' }}</time>
+          <span class="request-status" [class.failed]="request.status === 'failed'">{{ statusLabel(request.status) }}</span>
+        </div>
+        <p class="request-question" dir="auto">{{ request.question }}</p>
+        <dl class="request-times">
+          <div><dt>עד הטקסט הראשון</dt><dd dir="ltr">{{ duration(request.firstTextMs) }}</dd></div>
+          <div><dt>זמן כולל</dt><dd dir="ltr">{{ duration(request.totalMs) }}</dd></div>
+          <div><dt>זמן חיפוש</dt><dd dir="ltr">{{ duration(request.searchMs) }}</dd></div>
+          <div><dt>מקורות</dt><dd>{{ request.sourceCount ?? '—' }}</dd></div>
+        </dl>
+      </article>
+    } @empty {
+      <p class="history-note">אין עדיין מדידות מאז טעינת הדף. שלחי הודעה חדשה; המדידות יופיעו בסיום או בעצירה. פתיחת שיחה שמורה אינה משחזרת מדידות קודמות.</p>
+    }
+  </section>
   }
 
 </aside>
