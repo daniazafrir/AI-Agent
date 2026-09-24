@@ -66,6 +66,7 @@
     </app-composer>
 </main>
 <app-debug-panel
+    [prompts]="state.prompts()"
     [history]="state.requestHistory()"
     [debug]="state.debugInfo()"
     [sourceCount]="state.messages().at(-1)?.sources?.length ?? 0"

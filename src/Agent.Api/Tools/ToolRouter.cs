@@ -106,7 +106,7 @@ public sealed class ToolRouter(
     private static bool IsKnowledgeFollowUp(IReadOnlyList<ChatMessage> messages, string question)
     {
         if (!Regex.IsMatch(question,
-                @"(?i)\b(that|those|this|these|it|its|entitlement)\b"))
+                @"(?i)\b(that|those|this|these|it|its|entitlement)\b|זכאות|ממתי|מתי זה|מתי היא|מתי הוא"))
             return false;
 
         var previousQuestion = messages.OfType<UserChatMessage>()
@@ -137,6 +137,23 @@ public sealed class ToolRouter(
         var knowledgeTerms =
             new[]
             {
+                // Hebrew policy questions: avoid the ambiguous word עובד by itself.
+                "ימי חופשה",
+                "ימי החופשה",
+                "חופשה שנתית",
+                "מדיניות חופשה",
+                "ימי מחלה",
+                "עבודה מהבית",
+                "עבודה מרחוק",
+                "שעות העבודה",
+                "שעות עבודה",
+                "החזר הוצאות",
+                "החזרי הוצאות",
+                "נסיעות עסקיות",
+                "מדיניות החברה",
+                "נהלי החברה",
+                "מדריך העובד",
+                "מדריך לעובד",
                 // Employees / staff
                 "employee",
                 "employees",

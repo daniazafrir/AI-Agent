@@ -13,5 +13,6 @@ public sealed class ChatResponse
 
     public List<KnowledgeSource> Sources { get; init; } = [];
     public ChatDebugInfo? Debug { get; init; }
+    public IReadOnlyList<PromptSnapshot> Prompts { get; init; } = [];
 
 }

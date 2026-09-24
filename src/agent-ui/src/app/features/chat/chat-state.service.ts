@@ -12,7 +12,8 @@ import {
 
 import {
   ChatDebugInfo,
-  ChatMessage
+  ChatMessage,
+  PromptSnapshot
 } from 'src/app/core/models/chat.models';
 
 import { ChatStreamService } from './chat-stream.service';
@@ -26,6 +27,7 @@ export class ChatStateService {
   private requestSequence = 0;
   private readonly metrics = signal<ChatRequestMetric[]>([]);
   readonly requestHistory = this.metrics.asReadonly();
+  readonly prompts = signal<PromptSnapshot[]>([]);
   private finishActiveRequest: (() => void) | null = null;
 
   private readonly chatStream =
@@ -96,6 +98,7 @@ export class ChatStateService {
     this.error.set(null);
     this.activeTool.set(null);
     this.debugInfo.set(null);
+    this.prompts.set([]);
     this.isSending.set(true);
 
     this.addMessage({
@@ -130,6 +133,9 @@ export class ChatStateService {
           next: event => {
 
             switch (event.type) {
+              case 'prompt':
+                if (event.prompt) this.prompts.update(items => [...items, event.prompt!]);
+                break;
 
               case 'conversation':
 
@@ -376,6 +382,7 @@ export class ChatStateService {
   }
 
   clear(): void {
+    this.prompts.set([]);
 
     this.stopGeneration();
 
@@ -394,6 +401,7 @@ export class ChatStateService {
     conversation:
       ConversationDetails
   ): void {
+    this.prompts.set([]);
 
     this.stopGeneration();
 

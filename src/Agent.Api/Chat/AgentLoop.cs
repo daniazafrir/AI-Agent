@@ -52,6 +52,10 @@ public sealed class AgentLoop(
                     chatOptions.Tools.Select(
                         x => x.FunctionName)));
 
+            if (_options.EnablePromptViewer)
+                context.Prompts.Add(PromptSnapshot.Capture(
+                    context.Round, _options.Model, context.Messages, chatOptions));
+
             var completion =
                 await completionService.CompleteAsync(
                     context.Messages,
@@ -88,6 +92,8 @@ public sealed class AgentLoop(
 
                 return new AgentRunResult
                 {
+                    Prompts = context.Prompts.ToArray(),
+                    Debug = context.Debug,
                     AssistantMessage =
                         assistantMessage,
 
@@ -143,6 +149,14 @@ public sealed class AgentLoop(
 
             var chatOptions =
                 BuildOptions(context);
+
+            if (_options.EnablePromptViewer)
+                yield return new ChatStreamEvent
+                {
+                    Type = "prompt",
+                    Prompt = PromptSnapshot.Capture(
+                        context.Round, _options.Model, context.Messages, chatOptions)
+                };
 
             var finishReason =
                 ChatFinishReason.Stop;
@@ -385,6 +399,8 @@ public sealed class AgentLoop(
                             result.RawContent,
                             context.Sources);
 
+                        KnowledgeSearchRetry.Observe(context, toolCall.FunctionArguments, result.RawContent);
+
                         context.Debug =
                             ExtractDebugInfo(
                                 result.RawContent,
@@ -432,11 +448,12 @@ public sealed class AgentLoop(
             $"Agent exceeded the maximum number of {_options.MaxToolRounds} rounds.");
     }
 
-    private static ChatDebugInfo ExtractDebugInfo(
+    internal static ChatDebugInfo ExtractDebugInfo(
      string rawContent,
      BinaryData functionArguments)
     {
         var query = string.Empty;
+        var matches = new List<ChatSourceInfo>();
 
         var rawVectorResults = 0;
         var relevantVectorResults = 0;
@@ -467,6 +484,26 @@ public sealed class AgentLoop(
 
             var root =
                 resultDocument.RootElement;
+
+            if (root.TryGetProperty("matches", out var results) && results.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var match in results.EnumerateArray())
+                {
+                    var engine = match.TryGetProperty("searchEngine", out var e)
+                        ? e.ValueKind == JsonValueKind.String ? e.GetString() ?? ""
+                            : e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out var code)
+                                ? Enum.GetName(typeof(Agent.Knowledge.Search.Models.SearchEngineType), code) ?? "Unknown"
+                                : "Unknown"
+                        : "Unknown";
+                    matches.Add(new ChatSourceInfo
+                    {
+                        DocumentName = match.TryGetProperty("documentName", out var name) ? name.GetString() ?? "" : "",
+                        ChunkIndex = match.TryGetProperty("chunkIndex", out var index) ? index.GetInt32() : 0,
+                        Score = match.TryGetProperty("score", out var score) ? score.GetDouble() : 0,
+                        SearchEngine = engine
+                    });
+                }
+            }
 
             if (root.TryGetProperty(
                 "rawVectorResults",
@@ -532,6 +569,7 @@ public sealed class AgentLoop(
         return new ChatDebugInfo
         {
             ToolName = "search_knowledge",
+            Matches = matches,
             Query = query,
 
             RawVectorResults = rawVectorResults,
@@ -562,9 +600,18 @@ public sealed class AgentLoop(
 
         if (selectedTools.Count > 0)
         {
+            var retryKnowledge = context.EnglishKnowledgeRetryPending &&
+                !context.EnglishKnowledgeRetryRequested &&
+                selectedTools.Any(tool => tool.FunctionName == "search_knowledge");
+            if (retryKnowledge)
+            {
+                context.EnglishKnowledgeRetryPending = false;
+                context.EnglishKnowledgeRetryRequested = true;
+                context.Messages.Add(new SystemChatMessage("The Hebrew knowledge search returned no matches. Call search_knowledge now with an equivalent concise English query, preserving the user's intent and constraints. Do not ask permission or announce a future search. After the tool result, answer in the user's language using only retrieved evidence."));
+            }
             options.ToolChoice =
                 selectedTools.Any(tool => tool.FunctionName == "search_knowledge") &&
-                !context.UsedTools.Contains("search_knowledge", StringComparer.OrdinalIgnoreCase)
+                (retryKnowledge || !context.UsedTools.Contains("search_knowledge", StringComparer.OrdinalIgnoreCase))
                     ? ChatToolChoice.CreateFunctionChoice("search_knowledge")
                     : selectedTools.Any(tool => tool.FunctionName == "get_weather") &&
                       !context.UsedTools.Contains("get_weather", StringComparer.OrdinalIgnoreCase)

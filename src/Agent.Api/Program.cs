@@ -65,6 +65,11 @@ builder.Services
         "OpenAI model is required.")
     .ValidateOnStart();
 
+builder.Services.PostConfigure<OpenAiOptions>(options =>
+    options.EnablePromptViewer =
+        builder.Configuration.GetValue<bool?>("OpenAI:EnablePromptViewer") ??
+        builder.Environment.IsDevelopment());
+
 builder.Services.Configure<McpOptions>(
     builder.Configuration.GetSection(
         McpOptions.SectionName));

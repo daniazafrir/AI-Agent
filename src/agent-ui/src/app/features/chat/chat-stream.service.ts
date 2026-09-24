@@ -168,6 +168,13 @@ export class ChatStreamService {
 
           const event:
             ChatStreamEvent = {
+            prompt: (raw.prompt ?? raw.Prompt) ? {
+              round: (raw.prompt ?? raw.Prompt).round ?? (raw.prompt ?? raw.Prompt).Round,
+              model: (raw.prompt ?? raw.Prompt).model ?? (raw.prompt ?? raw.Prompt).Model,
+              capturedAtUtc: (raw.prompt ?? raw.Prompt).capturedAtUtc ?? (raw.prompt ?? raw.Prompt).CapturedAtUtc,
+              messagesJson: (raw.prompt ?? raw.Prompt).messagesJson ?? (raw.prompt ?? raw.Prompt).MessagesJson,
+              optionsJson: (raw.prompt ?? raw.Prompt).optionsJson ?? (raw.prompt ?? raw.Prompt).OptionsJson
+            } : null,
 
             type:
               raw.type ??
@@ -213,6 +220,12 @@ export class ChatStreamService {
             debug:
   rawDebug
     ? {
+        matches: (rawDebug.matches ?? rawDebug.Matches ?? []).map((match: any) => ({
+          documentName: match.documentName ?? match.DocumentName ?? '',
+          chunkIndex: match.chunkIndex ?? match.ChunkIndex ?? 0,
+          score: match.score ?? match.Score ?? 0,
+          searchEngine: match.searchEngine ?? match.SearchEngine ?? 'Unknown'
+        })),
         toolName:
           rawDebug.toolName ??
           rawDebug.ToolName ??

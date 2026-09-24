@@ -19,6 +19,7 @@ public sealed class ChatDebugInfo
     public double MinimumVectorScore { get; init; }
 
     public long SearchTimeMs { get; init; }
+    public IReadOnlyList<ChatSourceInfo> Matches { get; init; } = [];
 }
 public sealed class ChatSourceInfo
 {

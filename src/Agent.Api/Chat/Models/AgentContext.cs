@@ -16,4 +16,7 @@ public sealed class AgentContext
 
     public List<KnowledgeSource> Sources { get; init; } = [];
     public ChatDebugInfo? Debug { get; set; }
+    public List<PromptSnapshot> Prompts { get; } = [];
+    public bool EnglishKnowledgeRetryPending { get; set; }
+    public bool EnglishKnowledgeRetryRequested { get; set; }
 }

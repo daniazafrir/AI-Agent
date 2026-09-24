@@ -98,6 +98,8 @@ public sealed class ToolProcessor(
             if (string.Equals(tool.Name, "search_knowledge", StringComparison.OrdinalIgnoreCase))
             {
                 AgentLoop.ExtractSources(result.RawContent, context.Sources);
+                context.Debug = AgentLoop.ExtractDebugInfo(result.RawContent, tool.Arguments);
+                KnowledgeSearchRetry.Observe(context, tool.Arguments, result.RawContent);
             }
             context.Messages.Add(
                 new ToolChatMessage(

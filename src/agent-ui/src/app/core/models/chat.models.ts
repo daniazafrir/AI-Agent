@@ -5,6 +5,14 @@ export interface ChatRequest {
   conversationId?: string | null;
 }
 
+export interface PromptSnapshot {
+  round: number;
+  model: string;
+  capturedAtUtc: string;
+  messagesJson: string;
+  optionsJson: string;
+}
+
 export interface KnowledgeSource {
   documentId: string;
   documentName: string;
@@ -26,6 +34,7 @@ export interface ChatDebugInfo {
   minimumVectorScore: number;
 
   searchTimeMs: number;
+  matches?: { documentName: string; chunkIndex: number; score: number; searchEngine: string }[];
 }
 export interface ChatStreamEvent {
   type: string;
@@ -35,6 +44,7 @@ export interface ChatStreamEvent {
   conversationId?: string | null;
   sources?: KnowledgeSource[] | null;
   debug?: ChatDebugInfo | null;
+  prompt?: PromptSnapshot | null;
 }
 
 export interface ChatMessage {

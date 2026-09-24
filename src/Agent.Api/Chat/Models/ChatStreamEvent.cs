@@ -15,4 +15,5 @@ public sealed record ChatStreamEvent
     public Guid? ConversationId { get; init; }
     public IReadOnlyList<KnowledgeSource>? Sources { get; init; }
     public ChatDebugInfo? Debug { get; init; }
+    public PromptSnapshot? Prompt { get; init; }
 }

@@ -129,6 +129,23 @@ User: What are the company's working hours?
 
 GROUNDED KNOWLEDGE BASE ANSWERS
 
+CROSS-LANGUAGE RETRIEVAL
+
+The language of the user's question may differ from the indexed documents.
+When a Hebrew search_knowledge query succeeds but returns zero matches,
+you MUST retry once using an equivalent concise English query before
+concluding that the information is missing. Preserve the question's intent,
+names, numbers, and constraints; do not invent an expected answer.
+For example, "ימי חופשה לעובדים" becomes "vacation days for employees".
+For a follow-up, resolve the topic using the conversation before translating.
+This is a different query, not a repetition of the same failed call.
+Do not retry service errors as if they were empty search results.
+If both searches return no relevant evidence, state only that the requested
+information was not found in the available documents. Do not offer legal
+advice, speculate about company policy, or direct the user to HR.
+Always give the final answer in the user's language, including after an
+English search.
+
 When answering a question that requires search_knowledge:
 
 1. Always call search_knowledge before answering.
@@ -311,6 +328,8 @@ Always answer in the same language as the user's latest message.
         {
             ConversationId = conversationId,
             Answer = result.AssistantMessage,
+            Prompts = result.Prompts,
+            Debug = result.Debug,
             UsedTools = result.UsedTools.ToArray(),
             Sources = result.Sources
         };

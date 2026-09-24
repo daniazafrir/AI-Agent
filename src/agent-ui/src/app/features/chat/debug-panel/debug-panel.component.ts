@@ -4,21 +4,25 @@ import {
   ChangeDetectionStrategy,
   Component,
   input,
+  inject,
   output
 } from '@angular/core';
 
 import { MatIconModule } from '@angular/material/icon';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { ChatRequestMetric } from '../chat-request-metric';
 import { MatDividerModule } from '@angular/material/divider';
 
-import { ChatDebugInfo } from 'src/app/core/models/chat.models';
+import { ChatDebugInfo, PromptSnapshot } from 'src/app/core/models/chat.models';
+import { MatDialog } from '@angular/material/dialog';
+import { PromptViewerComponent } from '../prompt-viewer/prompt-viewer.component';
 
 @Component({
   selector: 'app-debug-panel',
   standalone: true,
   imports: [
     DatePipe,
+    DecimalPipe,
     MatIconModule,
     MatDividerModule
   ],
@@ -28,6 +32,14 @@ import { ChatDebugInfo } from 'src/app/core/models/chat.models';
     ChangeDetectionStrategy.OnPush
 })
 export class DebugPanelComponent {
+  private readonly dialog = inject(MatDialog);
+  readonly prompts = input<readonly PromptSnapshot[]>([]);
+
+  openPrompts(): void {
+    this.dialog.open(PromptViewerComponent, {
+      data: this.prompts, width: '1000px', maxWidth: '95vw', maxHeight: '90vh'
+    });
+  }
   readonly history = input<readonly ChatRequestMetric[]>([]);
 
   duration(value: number | null): string {

@@ -5,6 +5,7 @@ namespace Agent.Api.Configuration;
 public sealed class OpenAiOptions
 {
     public const string SectionName = "OpenAI";
+    public bool EnablePromptViewer { get; set; }
 
     [Required]
     public string Model { get; init; } = string.Empty;
