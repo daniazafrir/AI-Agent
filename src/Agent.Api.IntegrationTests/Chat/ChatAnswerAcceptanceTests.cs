@@ -64,7 +64,9 @@ public sealed partial class ChatAnswerAcceptanceTests
         AssertVacationSource(first);
 
         var second = await SendAsync(followUp, streaming, id);
-        Assert.Matches(@"(?i)\b(?:(?:one|1|first)\s+year|(?:12|twelve)\s+months)\b", second.Answer);
+        Assert.True(Regex.IsMatch(second.Answer,
+            @"(?i)\b(?:(?:one|1|first)\s+(?:full\s+)?year|(?:12|twelve)\s+months)\b"),
+            "Expected a one-year eligibility period. Full answer: " + second.Answer);
         Assert.Contains("search_knowledge", second.UsedTools);
         AssertVacationSource(second);
         Assert.DoesNotContain("calculate", second.UsedTools);
