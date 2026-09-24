@@ -1,6 +1,8 @@
 using Mcp.Tools.Server.Features.Rag;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRagServices(builder.Configuration);
+builder.Services.AddHttpClient<Mcp.Tools.Server.Tools.WeatherTools>(client =>
+    client.Timeout = TimeSpan.FromSeconds(20));
 //
 // MCP
 //

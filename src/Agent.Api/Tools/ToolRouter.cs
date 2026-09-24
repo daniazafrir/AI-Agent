@@ -38,6 +38,11 @@ public sealed class ToolRouter(
 
             switch (toolName)
             {
+                case "get_weather":
+                    if (NeedsWeather(question) || IsWeatherFollowUp(messages, question))
+                        tools.Add(tool);
+                    break;
+
                 case "search_knowledge":
                     if (needsKnowledge)
                     {
@@ -74,6 +79,28 @@ public sealed class ToolRouter(
         }
 
         return tools;
+    }
+
+    private static bool NeedsWeather(string question) =>
+        Regex.IsMatch(question, @"(?i)\b(weather|forecast|temperature|rain|raining|snow|snowing)\b|מזג|תחזית|טמפרטור|גשם|שלג");
+
+    private static bool IsWeatherFollowUp(IReadOnlyList<ChatMessage> messages, string question)
+    {
+        var users = messages.OfType<UserChatMessage>().ToArray();
+        if (users.Length < 2) return false;
+        var previousQuestion = string.Join(" ", users[^2].Content.Select(x => x.Text));
+        // Ignore tool-round assistant messages after the latest user turn.
+        var latestUserIndex = messages.ToList().FindLastIndex(x => x is UserChatMessage);
+        var previousAnswer = messages.Take(latestUserIndex).OfType<AssistantChatMessage>().LastOrDefault();
+        var answer = previousAnswer is null ? "" : string.Join(" ", previousAnswer.Content.Select(x => x.Text));
+        if (!NeedsWeather(previousQuestion) && !NeedsWeather(answer)) return false;
+        if (Regex.IsMatch(question, @"(?i)^(?:(?:and |what about |how about )?(?:tomorrow|today|the day after tomorrow)|(?:ו?מה\s+|ו)?(?:מחר|מחרתיים|היום))[?!.\s]*$"))
+            return true;
+        if (Regex.IsMatch(question, @"(?i)^(כן|נכון|מאשר|מאשרת|yes|correct|sure|ok|okay)[.!\s]*$"))
+            return true;
+        // A short location answer is relevant only after a location clarification.
+        return question.Length <= 80 && !question.Contains('?') &&
+            Regex.IsMatch(answer, @"(?i)(which city|which country|specify.*(?:city|country)|באיזו עיר|איזו עיר|איזו מדינה|התכוונת)");
     }
 
     private static bool IsKnowledgeFollowUp(IReadOnlyList<ChatMessage> messages, string question)

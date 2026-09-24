@@ -61,6 +61,8 @@ export class ChatComponent {
 
       case 'get_current_time':
         return '🕒';
+      case 'get_weather':
+        return '🌤️';
 
       case 'index_document':
         return '📄';
@@ -82,6 +84,8 @@ export class ChatComponent {
 
       case 'get_current_time':
         return 'בודק את השעה...';
+      case 'get_weather':
+        return 'בודק את מזג האוויר...';
 
       case 'index_document':
         return 'מאנדקס מסמך...';
