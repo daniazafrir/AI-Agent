@@ -23,6 +23,28 @@ Keep Rag:MinimumVectorScore at the calibrated 0.45.
 
 ## Run from the solution directory
 
+Recommended full-suite command (PowerShell):
+
+    ./src/Agent.Api.IntegrationTests/Run-IntegrationTests.ps1
+
+It first runs one `Category=Preflight` test. If that test fails, the script
+exits with a nonzero code and does not start the acceptance scenarios.
+The probe checks Agent.Api /health/ready (including MCP and PostgreSQL),
+one direct RAG search (embeddings, Qdrant, PostgreSQL), and Open-Meteo.
+Each stage has a 30-second deadline. The RAG probe consumes one embedding
+request and requires the same credentials as the direct RAG tests.
+Connectivity success does not validate indexed documents or answer accuracy.
+
+For diagnostics only:
+
+    ./src/Agent.Api.IntegrationTests/Run-IntegrationTests.ps1 -PreflightOnly
+
+Build output goes to a temporary directory to avoid DLL locks from running
+servers. Override it with `-OutputRoot <path>` if needed.
+In Visual Studio, run `RequiredServices_AreReady` first manually.
+Ordinary `dotnet test` or Run All still runs tests independently; only the
+script guarantees the preflight gate. Failed probes are not silently skipped.
+
 Unit tests (no external services):
     dotnet test src/Agent.Api.Tests/Agent.Api.Tests.csproj
 
