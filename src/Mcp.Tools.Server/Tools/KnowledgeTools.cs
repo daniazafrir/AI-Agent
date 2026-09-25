@@ -47,6 +47,10 @@ public sealed class KnowledgeTools
 
             searchTimeMs =
         result.SearchTimeMs,
+            embeddingTimeMs = result.EmbeddingTimeMs,
+            vectorSearchTimeMs = result.VectorSearchTimeMs,
+            keywordSearchTimeMs = result.KeywordSearchTimeMs,
+            rankingTimeMs = result.RankingTimeMs,
 
             matchCount =
         result.Matches.Count,

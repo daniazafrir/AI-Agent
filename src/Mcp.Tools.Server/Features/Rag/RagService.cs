@@ -180,7 +180,11 @@ public sealed class RagService(
             hybridResult.MinimumVectorScore,
 
                 SearchTimeMs =
-            hybridResult.SearchTimeMs
+            hybridResult.SearchTimeMs,
+                EmbeddingTimeMs = hybridResult.EmbeddingTimeMs,
+                VectorSearchTimeMs = hybridResult.VectorSearchTimeMs,
+                KeywordSearchTimeMs = hybridResult.KeywordSearchTimeMs,
+                RankingTimeMs = hybridResult.RankingTimeMs,
             };
     }
 

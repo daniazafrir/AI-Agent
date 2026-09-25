@@ -266,6 +266,10 @@ export class ChatStreamService {
           rawDebug.MinimumVectorScore ??
           0,
 
+        embeddingTimeMs: rawDebug.embeddingTimeMs ?? rawDebug.EmbeddingTimeMs ?? null,
+        vectorSearchTimeMs: rawDebug.vectorSearchTimeMs ?? rawDebug.VectorSearchTimeMs ?? null,
+        keywordSearchTimeMs: rawDebug.keywordSearchTimeMs ?? rawDebug.KeywordSearchTimeMs ?? null,
+        rankingTimeMs: rawDebug.rankingTimeMs ?? rawDebug.RankingTimeMs ?? null,
         searchTimeMs:
           rawDebug.searchTimeMs ??
           rawDebug.SearchTimeMs ??

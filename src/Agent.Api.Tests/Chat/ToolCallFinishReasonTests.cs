@@ -43,7 +43,7 @@ public sealed class ToolCallFinishReasonTests
         var executor = new Mock<IToolExecutor>();
         executor.Setup(x => x.ExecuteAsync("search_knowledge", It.IsAny<BinaryData>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new ToolExecutionResult {
-                RawContent = """{"matches":[{"documentId":"00000000-0000-0000-0000-000000000001","documentName":"Handbook","chunkIndex":3,"score":0.032,"searchEngine":2}]}""",
+                RawContent = """{"embeddingTimeMs":120,"vectorSearchTimeMs":20,"keywordSearchTimeMs":30,"rankingTimeMs":0,"matches":[{"documentId":"00000000-0000-0000-0000-000000000001","documentName":"Handbook","chunkIndex":3,"score":0.032,"searchEngine":2}]}""",
                 Content = "Source: Handbook\nEmployees get 19 vacation days."
             });
         var registry = new Mock<IMcpToolRegistry>();
@@ -75,6 +75,11 @@ public sealed class ToolCallFinishReasonTests
             Assert.Equal(3, match.ChunkIndex);
             Assert.Equal(0.032, match.Score);
             Assert.Equal("Hybrid", match.SearchEngine);
+            var debug = events.Single(e => e.Type == "completed").Debug!;
+            Assert.Equal(120L, debug.EmbeddingTimeMs);
+            Assert.Equal(20L, debug.VectorSearchTimeMs);
+            Assert.Equal(30L, debug.KeywordSearchTimeMs);
+            Assert.Equal(0L, debug.RankingTimeMs);
         }
         else
         {

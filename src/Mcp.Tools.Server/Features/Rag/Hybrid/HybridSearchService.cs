@@ -187,7 +187,11 @@ public sealed class HybridSearchService(
                 minimumVectorScore,
 
             SearchTimeMs =
-                totalStopwatch.ElapsedMilliseconds
+                totalStopwatch.ElapsedMilliseconds,
+            EmbeddingTimeMs = embeddingStopwatch.ElapsedMilliseconds,
+            VectorSearchTimeMs = vector.TimeMs,
+            KeywordSearchTimeMs = keyword.TimeMs,
+            RankingTimeMs = rankingStopwatch.ElapsedMilliseconds
         };
     }
 

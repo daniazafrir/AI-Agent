@@ -170,3 +170,6 @@
 .request-times { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 0; }
 .request-times dt { font-size: 11px; color: #555; }
 .request-times dd { margin: 4px 0 0; font-size: 13px; text-align: start; }
+.timing-stage { margin-block: 12px; }
+.timing-track { height: 8px; background: #e4e8f0; border-radius: 4px; overflow: hidden; }
+.timing-bar { height: 100%; background: #5262d6; border-radius: 4px; }

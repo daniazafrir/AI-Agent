@@ -19,4 +19,8 @@ public sealed class HybridSearchResult
     public double MinimumVectorScore { get; init; }
 
     public long SearchTimeMs { get; init; }
+    public long? EmbeddingTimeMs { get; init; }
+    public long? VectorSearchTimeMs { get; init; }
+    public long? KeywordSearchTimeMs { get; init; }
+    public long? RankingTimeMs { get; init; }
 }

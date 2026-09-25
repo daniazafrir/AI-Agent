@@ -34,6 +34,10 @@ export interface ChatDebugInfo {
   minimumVectorScore: number;
 
   searchTimeMs: number;
+  embeddingTimeMs?: number | null;
+  vectorSearchTimeMs?: number | null;
+  keywordSearchTimeMs?: number | null;
+  rankingTimeMs?: number | null;
   matches?: { documentName: string; chunkIndex: number; score: number; searchEngine: string }[];
 }
 export interface ChatStreamEvent {

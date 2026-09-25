@@ -88,11 +88,19 @@
     </div>
 
     <div class="debug-row">
-      <span class="label">Search time</span>
+      <span class="label">Total hybrid search time</span>
       <span class="value">
         {{ info.searchTimeMs }} ms
       </span>
     </div>
+    <h4>Search performance</h4>
+    <p class="history-note" dir="rtl">המדידות הן לחיפוש האחרון בלבד, ללא זמן תשובת המודל. חיפוש וקטורי וחיפוש מילות מפתח רצים במקביל; סכום השלבים אינו הזמן הכולל. 0 ms מציין פחות מאלפית שנייה, ו־— מדידה שלא התקבלה.</p>
+    @for (stage of stages(); track stage.label) {
+      <div class="timing-stage">
+        <div class="debug-row"><span class="label">{{ stage.label }}</span><span class="value">{{ duration(stage.ms) }}</span></div>
+        <div class="timing-track" aria-hidden="true"><div class="timing-bar" [style.width.%]="stage.width"></div></div>
+      </div>
+    }
   </section>
   } @else {
 

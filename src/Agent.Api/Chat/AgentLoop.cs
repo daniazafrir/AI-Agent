@@ -581,9 +581,25 @@ public sealed class AgentLoop(
 
             MinimumVectorScore = minimumVectorScore,
 
-            SearchTimeMs = searchTimeMs
+            SearchTimeMs = searchTimeMs,
+            EmbeddingTimeMs = ReadTiming(rawContent, "embeddingTimeMs"),
+            VectorSearchTimeMs = ReadTiming(rawContent, "vectorSearchTimeMs"),
+            KeywordSearchTimeMs = ReadTiming(rawContent, "keywordSearchTimeMs"),
+            RankingTimeMs = ReadTiming(rawContent, "rankingTimeMs"),
         };
     }
+    private static long? ReadTiming(string rawContent, string name)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(rawContent);
+            return TryGetPropertyIgnoreCase(document.RootElement, name, out var value) &&
+                value.ValueKind == JsonValueKind.Number && value.TryGetInt64(out var ms) && ms >= 0
+                ? ms : null;
+        }
+        catch (JsonException) { return null; }
+    }
+
     private ChatCompletionOptions BuildOptions(
     AgentContext context)
     {

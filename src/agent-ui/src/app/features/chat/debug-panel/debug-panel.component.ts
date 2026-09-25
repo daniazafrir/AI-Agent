@@ -3,6 +3,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
   inject,
   output
@@ -54,6 +55,18 @@ export class DebugPanelComponent {
     input<ChatDebugInfo | null>(null);
 
   readonly sourceCount = input(0);
+
+  readonly stages = computed(() => {
+    const info = this.debug();
+    const rows = [
+      { label: 'Embedding', ms: info?.embeddingTimeMs },
+      { label: 'Vector search', ms: info?.vectorSearchTimeMs },
+      { label: 'Keyword search', ms: info?.keywordSearchTimeMs },
+      { label: 'Ranking', ms: info?.rankingTimeMs }
+    ].map(row => ({ ...row, ms: typeof row.ms === 'number' && Number.isFinite(row.ms) && row.ms >= 0 ? row.ms : null }));
+    const maximum = Math.max(1, ...rows.map(row => row.ms ?? 0));
+    return rows.map(row => ({ ...row, width: (row.ms ?? 0) / maximum * 100 }));
+  });
 
   readonly collapsed = input(false);
   readonly collapsedChange = output<boolean>();
