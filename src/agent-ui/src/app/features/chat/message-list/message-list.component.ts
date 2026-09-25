@@ -25,7 +25,7 @@ export class MessageListComponent
     inject(MatDialog);
 
 openSource(
-    source: KnowledgeSource
+    source: KnowledgeSource, answer: string
 ): void {
 
     this.dialog.open(
@@ -34,7 +34,7 @@ openSource(
             width: '800px',
             maxWidth: '95vw',
             maxHeight: '80vh',
-            data: source
+            data: { ...source, answer }
         }
     );
 }

@@ -1,31 +1,27 @@
-<h2 mat-dialog-title>
-  📄 {{ source.documentName }}
-</h2>
-
+<h2 mat-dialog-title dir="auto">📄 {{ source.documentName }}</h2>
 <mat-dialog-content>
-
-  @if (loading) {
-    <p>Loading source...</p>
+  <p class="chunk-meta">Chunk {{ source.chunkIndex }} · אינדקס מתחיל ב־0</p>
+  @if (loading()) { <p role="status">טוען את הקטע…</p> }
+  @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    <button mat-button (click)="load()">ניסיון נוסף</button>
   }
-
-  @if (chunk) {
-    <div class="chunk-meta">
-      Chunk {{ chunk.chunkIndex }}
+  @if (chunk(); as loaded) {
+    <label for="source-search">מילים או מספרים להדגשה</label>
+    <div class="search-row">
+      <input id="source-search" type="search" dir="auto" [value]="search()"
+        (input)="search.set($any($event.target).value)" placeholder="לדוגמה: vacation 19" />
+      <button mat-button (click)="search.set('')" [disabled]="!search()">נקה</button>
     </div>
-
-    <div
-      class="chunk-content"
-      dir="auto">
-      {{ chunk.content }}
-    </div>
+    <p class="hint">מספרים מהתשובה מוזנים אוטומטית. ההדגשה מציינת התאמה מילולית בלבד; ניתן לחפש בשפת המסמך.</p>
+    @if (search().trim()) { <p role="status">{{ matchCount() }} התאמות בקטע</p> }
+    <div class="chunk-content" dir="auto">@for (part of parts(); track $index) {@if (part.highlight) {<mark>{{ part.text }}</mark>} @else {<span>{{ part.text }}</span>}}</div>
+    @if (!loaded.content) { <p>הקטע ריק.</p> }
+    <details class="chunk-meta">
+      <summary>פרטי המקור</summary>
+      <p dir="ltr">Document ID: {{ source.documentId }}</p>
+      <p dir="ltr">Retrieval score (RRF): {{ source.score }}</p>
+    </details>
   }
-
 </mat-dialog-content>
-
-<mat-dialog-actions align="end">
-  <button
-    mat-button
-    mat-dialog-close>
-    Close
-  </button>
-</mat-dialog-actions>
+<mat-dialog-actions align="end"><button mat-button mat-dialog-close>סגור</button></mat-dialog-actions>
