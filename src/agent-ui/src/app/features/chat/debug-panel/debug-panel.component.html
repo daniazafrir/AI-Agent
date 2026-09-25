@@ -110,6 +110,32 @@
 
   }
 
+  @if (debug(); as info) {
+    <section class="debug-section" dir="rtl">
+      <h4>RAG Analytics</h4>
+      <p class="history-note">הנתונים מתייחסים לקריאת החיפוש האחרונה בלבד. הכללה בהקשר אינה הוכחה שהמודל השתמש בקטע בתשובה.</p>
+      <p>מועמדים וקטוריים שסוננו בסף הרלוונטיות: {{ info.rawVectorResults - info.relevantVectorResults }}</p>
+      <p class="history-note">זהות המועמדים שסוננו אינה מוחזרת מהשרת. נתון זה אינו כולל סינון נוסף בדירוג או הסרת כפילויות.</p>
+      @if (info.analytics; as analytics) {
+        <div class="debug-row"><span>קטעים שהכלי החזיר</span><strong>{{ analytics.returnedChunks }}</strong></div>
+        <div class="debug-row"><span>נכללו בהקשר</span><strong>{{ analytics.includedChunks }}</strong></div>
+        <div class="debug-row"><span>הושמטו בבניית ההקשר</span><strong>{{ analytics.omittedChunks }}</strong></div>
+        <div class="debug-row"><span>תווים בהודעת הכלי (לא טוקנים)</span><strong>{{ analytics.contextCharacters }}</strong></div>
+        @for (chunk of analytics.chunks; track $index) {
+          <article class="request-card">
+            <strong dir="auto">{{ chunk.documentName ?? 'מסמך ללא שם' }}</strong>
+            <p>קטע {{ chunk.chunkIndex ?? '—' }} · {{ chunk.contentCharacters }} תווים</p>
+            <p>{{ chunk.included ? 'נכלל בהקשר' : 'הושמט מההקשר' }}</p>
+            @if (chunk.reason === 'empty_content') { <p>סיבה: תוכן ריק</p> }
+            @if (chunk.reason === 'raw_payload_fallback') { <p>הועבר כחלק מתשובת הכלי הגולמית; אין טקסט קטע זמין.</p> }
+          </article>
+        }
+      } @else {
+        <p>נתוני בניית ההקשר אינם זמינים לבקשה זו.</p>
+      }
+    </section>
+  }
+
   @if (debug()?.matches?.length) {
     <section class="debug-section">
       <h4>Ranked results</h4>

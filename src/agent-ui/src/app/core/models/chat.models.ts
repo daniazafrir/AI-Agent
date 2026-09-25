@@ -21,6 +21,11 @@ export interface KnowledgeSource {
 }
 
 export interface ChatDebugInfo {
+  analytics?: {
+    returnedChunks: number; includedChunks: number; omittedChunks: number; contextCharacters: number;
+    chunks: { documentId: string | null; documentName: string | null; chunkIndex: number | null;
+      contentCharacters: number; included: boolean; reason: string }[];
+  } | null;
   toolName: string;
   query: string;
 

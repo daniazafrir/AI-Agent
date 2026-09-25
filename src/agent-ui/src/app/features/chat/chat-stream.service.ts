@@ -220,6 +220,23 @@ export class ChatStreamService {
             debug:
   rawDebug
     ? {
+        analytics: (() => {
+          const a = rawDebug.analytics ?? rawDebug.Analytics;
+          return a ? {
+            returnedChunks: a.returnedChunks ?? a.ReturnedChunks,
+            includedChunks: a.includedChunks ?? a.IncludedChunks,
+            omittedChunks: a.omittedChunks ?? a.OmittedChunks,
+            contextCharacters: a.contextCharacters ?? a.ContextCharacters,
+            chunks: (a.chunks ?? a.Chunks ?? []).map((c: any) => ({
+              documentId: c.documentId ?? c.DocumentId ?? null,
+              documentName: c.documentName ?? c.DocumentName ?? null,
+              chunkIndex: c.chunkIndex ?? c.ChunkIndex ?? null,
+              contentCharacters: c.contentCharacters ?? c.ContentCharacters,
+              included: c.included ?? c.Included ?? false,
+              reason: c.reason ?? c.Reason ?? ''
+            }))
+          } : null;
+        })(),
         matches: (rawDebug.matches ?? rawDebug.Matches ?? []).map((match: any) => ({
           documentName: match.documentName ?? match.DocumentName ?? '',
           chunkIndex: match.chunkIndex ?? match.ChunkIndex ?? 0,

@@ -2,6 +2,7 @@
 
 public sealed class ChatDebugInfo
 {
+    public Agent.Api.Tools.KnowledgeContextAnalytics? Analytics { get; init; }
     public string ToolName { get; init; } = string.Empty;
 
     public string Query { get; init; } = string.Empty;

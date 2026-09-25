@@ -404,7 +404,7 @@ public sealed class AgentLoop(
                         context.Debug =
                             ExtractDebugInfo(
                                 result.RawContent,
-                                toolCall.FunctionArguments);
+                                toolCall.FunctionArguments, result.Analytics);
                     }
 
                     logger.LogInformation(
@@ -450,7 +450,8 @@ public sealed class AgentLoop(
 
     internal static ChatDebugInfo ExtractDebugInfo(
      string rawContent,
-     BinaryData functionArguments)
+     BinaryData functionArguments,
+     KnowledgeContextAnalytics? analytics = null)
     {
         var query = string.Empty;
         var matches = new List<ChatSourceInfo>();
@@ -568,6 +569,7 @@ public sealed class AgentLoop(
 
         return new ChatDebugInfo
         {
+            Analytics = analytics,
             ToolName = "search_knowledge",
             Matches = matches,
             Query = query,
