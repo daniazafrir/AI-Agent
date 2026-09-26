@@ -93,6 +93,7 @@ public sealed class AgentLoop(
                 return new AgentRunResult
                 {
                     Prompts = context.Prompts.ToArray(),
+                    ToolCalls = context.ToolCalls.ToArray(),
                     Debug = context.Debug,
                     AssistantMessage =
                         assistantMessage,
@@ -432,6 +433,8 @@ public sealed class AgentLoop(
                     yield return new ChatStreamEvent
                     {
                         Type = "tool-completed",
+                        ToolCall = new ToolTrace(toolCall.FunctionName, toolCall.FunctionArguments.ToString(), result.Content,
+                            toolCall.FunctionName == "search_knowledge" ? context.Debug : null, context.Sources.ToArray()),
                         ToolName =
                             toolCall.FunctionName
                     };
@@ -486,11 +489,11 @@ public sealed class AgentLoop(
             var root =
                 resultDocument.RootElement;
 
-            if (root.TryGetProperty("matches", out var results) && results.ValueKind == JsonValueKind.Array)
+            if (TryGetPropertyIgnoreCase(root, "matches", out var results) && results.ValueKind == JsonValueKind.Array)
             {
                 foreach (var match in results.EnumerateArray())
                 {
-                    var engine = match.TryGetProperty("searchEngine", out var e)
+                    var engine = TryGetPropertyIgnoreCase(match, "searchEngine", out var e)
                         ? e.ValueKind == JsonValueKind.String ? e.GetString() ?? ""
                             : e.ValueKind == JsonValueKind.Number && e.TryGetInt32(out var code)
                                 ? Enum.GetName(typeof(Agent.Knowledge.Search.Models.SearchEngineType), code) ?? "Unknown"
@@ -498,9 +501,9 @@ public sealed class AgentLoop(
                         : "Unknown";
                     matches.Add(new ChatSourceInfo
                     {
-                        DocumentName = match.TryGetProperty("documentName", out var name) ? name.GetString() ?? "" : "",
-                        ChunkIndex = match.TryGetProperty("chunkIndex", out var index) ? index.GetInt32() : 0,
-                        Score = match.TryGetProperty("score", out var score) ? score.GetDouble() : 0,
+                        DocumentName = TryGetPropertyIgnoreCase(match, "documentName", out var name) && name.ValueKind == JsonValueKind.String ? name.GetString() ?? "" : "",
+                        ChunkIndex = TryGetPropertyIgnoreCase(match, "chunkIndex", out var index) && index.ValueKind == JsonValueKind.Number && index.TryGetInt32(out var chunkIndex) ? chunkIndex : 0,
+                        Score = TryGetPropertyIgnoreCase(match, "score", out var score) && score.ValueKind == JsonValueKind.Number && score.TryGetDouble(out var rankScore) ? rankScore : 0,
                         SearchEngine = engine
                     });
                 }

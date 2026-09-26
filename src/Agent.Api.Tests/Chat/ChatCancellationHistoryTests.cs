@@ -34,8 +34,9 @@ public class ChatCancellationHistoryTests
         cancellation.Cancel();
         await iterator.DisposeAsync();
 
-        service.Verify(x => x.SaveAssistantMessageAsync(id,
+        service.Verify(x => x.SaveAssistantTraceAsync(id,
             receiveText ? "partial\n\n[התשובה לא הושלמה]" : "[התשובה לא הושלמה]",
+            It.Is<ConversationTrace>(trace => trace.Status == "cancelled"),
             It.Is<CancellationToken>(token => !token.IsCancellationRequested && token != cancellation.Token)), Times.Once);
         service.Verify(x => x.SaveConversationAsync(It.IsAny<Guid>(), It.IsAny<string>(),
             It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
@@ -53,9 +54,20 @@ public class ChatCancellationHistoryTests
         var sut = new ChatOrchestrator(service.Object, runtime.Object,
             Mock.Of<ILogger<ChatOrchestrator>>());
         var id = Guid.NewGuid();
-        await foreach (var item in sut.ChatStreamingAsync(new() { ConversationId = id, Message = "question" })) { }
+        var persisted = false;
+        service.Setup(x => x.SaveAssistantTraceAsync(id, "partial", It.IsAny<ConversationTrace>(), It.IsAny<CancellationToken>()))
+            .Callback(() => persisted = true).Returns(Task.CompletedTask);
+        var events = new List<ChatStreamEvent>();
+        await foreach (var item in sut.ChatStreamingAsync(new() { ConversationId = id, Message = "question" }))
+        {
+            if (item.Type == "saved") Assert.True(persisted);
+            events.Add(item);
+        }
+        Assert.Equal("saved", events[^1].Type);
+        Assert.Equal("completed", events[^1].Trace!.Status);
+        Assert.Single(events.Where(e => e.Type == "saved"));
         service.Verify(x => x.SaveUserMessageAsync(id, "question", It.IsAny<CancellationToken>()), Times.Once);
-        service.Verify(x => x.SaveAssistantMessageAsync(id, "partial", It.IsAny<CancellationToken>()), Times.Once);
+        service.Verify(x => x.SaveAssistantTraceAsync(id, "partial", It.Is<ConversationTrace>(trace => trace.Status == "completed"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static async IAsyncEnumerable<ChatStreamEvent> Events()

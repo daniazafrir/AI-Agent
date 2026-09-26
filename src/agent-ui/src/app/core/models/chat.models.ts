@@ -46,6 +46,7 @@ export interface ChatDebugInfo {
   matches?: { documentName: string; chunkIndex: number; score: number; searchEngine: string }[];
 }
 export interface ChatStreamEvent {
+  trace?: ConversationTrace | null;
   type: string;
   content?: string | null;
   toolName?: string | null;
@@ -57,11 +58,24 @@ export interface ChatStreamEvent {
 }
 
 export interface ChatMessage {
+  trace?: ConversationTrace | null;
   incomplete?: boolean;
   role: 'user' | 'assistant';
   content: string;
   usedTools?: string[];
   sources?: KnowledgeSource[];
+}
+export interface ConversationTrace {
+  version: number;
+  status: string;
+  startedAtUtc: string;
+  totalMs: number;
+  firstTextMs: number | null;
+  prompts: PromptSnapshot[];
+  toolCalls: { name: string; arguments: string; result: string; debug: ChatDebugInfo | null }[];
+  usedTools: string[];
+  sources: KnowledgeSource[];
+  debug: ChatDebugInfo | null;
 }
 export interface ConversationSummary {
 

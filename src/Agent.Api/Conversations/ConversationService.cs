@@ -7,6 +7,8 @@ public sealed class ConversationService(
     : IConversationService
 {
     private const string UserRole = "user";
+    public Task SaveAssistantTraceAsync(Guid conversationId, string message, Agent.Api.Chat.Models.ConversationTrace trace, CancellationToken cancellationToken = default)
+        => conversationStore.AddMessageWithTraceAsync(conversationId, AssistantRole, message, trace.ToJson(), cancellationToken);
     private const string AssistantRole = "assistant";
 
     public Task SaveUserMessageAsync(Guid conversationId, string message, CancellationToken cancellationToken = default)

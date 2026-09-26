@@ -133,6 +133,15 @@ export class ChatStateService {
           next: event => {
 
             switch (event.type) {
+              case 'saved':
+                if (event.trace) {
+                  this.messages.update(messages => {
+                    const last = messages.at(-1);
+                    if (last?.role !== 'assistant') return messages;
+                    return [...messages.slice(0, -1), { ...last, trace: event.trace }];
+                  });
+                }
+                break;
               case 'prompt':
                 if (event.prompt) this.prompts.update(items => [...items, event.prompt!]);
                 break;

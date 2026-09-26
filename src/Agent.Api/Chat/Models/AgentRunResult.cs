@@ -5,6 +5,7 @@ namespace Agent.Api.Chat.Models;
 public sealed class AgentRunResult
 {
     public IReadOnlyList<PromptSnapshot> Prompts { get; init; } = [];
+    public IReadOnlyList<ToolTrace> ToolCalls { get; init; } = [];
     public ChatDebugInfo? Debug { get; init; }
     public string AssistantMessage { get; init; } =
         string.Empty;

@@ -275,10 +275,10 @@ public class ChatOrchestratorTests
             Times.Once);
 
         _conversationService.Verify(
-            x => x.SaveConversationAsync(
+            x => x.SaveAssistantTraceAsync(
                 existingConversationId,
-                request.Message,
                 "Hi!",
+                It.IsAny<Agent.Api.Chat.Models.ConversationTrace>(),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

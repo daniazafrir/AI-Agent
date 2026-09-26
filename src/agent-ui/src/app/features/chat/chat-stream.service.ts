@@ -1,3 +1,4 @@
+import { normalizeTraceKeys } from './normalize-trace';
 // chat-stream.service.ts
 
 import { Injectable } from '@angular/core';
@@ -168,6 +169,7 @@ export class ChatStreamService {
 
           const event:
             ChatStreamEvent = {
+            trace: normalizeTraceKeys(raw.trace ?? raw.Trace ?? null),
             prompt: (raw.prompt ?? raw.Prompt) ? {
               round: (raw.prompt ?? raw.Prompt).round ?? (raw.prompt ?? raw.Prompt).Round,
               model: (raw.prompt ?? raw.Prompt).model ?? (raw.prompt ?? raw.Prompt).Model,

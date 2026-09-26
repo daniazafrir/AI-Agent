@@ -105,6 +105,8 @@ public sealed class ToolProcessor(
                 new ToolChatMessage(
                     tool.Id,
                     result.Content));
+            context.ToolCalls.Add(new ToolTrace(tool.Name, tool.Arguments.ToString(), result.Content,
+                tool.Name == "search_knowledge" ? context.Debug : null, context.Sources.ToArray()));
 
             yield return new ChatStreamEvent
             {

@@ -12,7 +12,7 @@ import { PromptSnapshot } from 'src/app/core/models/chat.models';
     <h2 mat-dialog-title>Prompt Viewer</h2>
     <mat-dialog-content>
       <p dir="rtl">צילום הקלט שהוכן לקריאה למודל, לפי סבב. תוצאות כלי החיפוש מופיעות בהודעות tool.
-        הנתונים זמינים לבקשה הנוכחית בלבד ואינם אישור שהספק קיבל את הקריאה.</p>
+        הנתונים שייכים לתשובה שנבחרה ואינם אישור שהספק קיבל את הקריאה.</p>
       <nav aria-label="Model rounds">
         @for (round of rounds(); track round.round; let i = $index) {
           <button type="button" [attr.aria-pressed]="selected() === i" (click)="selected.set(i)">

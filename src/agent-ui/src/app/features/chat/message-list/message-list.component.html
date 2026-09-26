@@ -45,6 +45,9 @@
                 @if (message.incomplete) {
                     <p role="status">התשובה לא הושלמה</p>
                 }
+                @if (message.role === 'assistant' && message.trace) {
+                    <button type="button" (click)="openTrace(message.trace)">אבחון תשובה שמורה</button>
+                }
 
                 @if (message.sources?.length) {
     <div class="sources">

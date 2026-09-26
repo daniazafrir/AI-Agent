@@ -4,6 +4,7 @@ namespace Agent.Api.Features.Conversation;
 
 public interface IConversationStore
 {
+    Task AddMessageWithTraceAsync(Guid conversationId, string role, string content, string? traceJson, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ConversationSummary>> GetConversationsAsync(
         CancellationToken cancellationToken = default);
 

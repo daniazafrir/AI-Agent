@@ -16,4 +16,6 @@ public sealed record ChatStreamEvent
     public IReadOnlyList<KnowledgeSource>? Sources { get; init; }
     public ChatDebugInfo? Debug { get; init; }
     public PromptSnapshot? Prompt { get; init; }
+    public ToolTrace? ToolCall { get; init; }
+    public ConversationTrace? Trace { get; init; }
 }

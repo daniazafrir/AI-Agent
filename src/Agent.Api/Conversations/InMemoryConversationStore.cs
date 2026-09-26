@@ -16,6 +16,10 @@ public sealed class InMemoryConversationStore
         string role,
         string content,
         CancellationToken cancellationToken = default)
+        => AddMessageWithTraceAsync(conversationId, role, content, null, cancellationToken);
+
+    public Task AddMessageWithTraceAsync(Guid conversationId, string role, string content,
+        string? traceJson, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -43,7 +47,7 @@ public sealed class InMemoryConversationStore
         var message = new StoredMessage(
             role.Trim(),
             content.Trim(),
-            DateTime.UtcNow);
+            DateTime.UtcNow, traceJson);
 
         var messages = _conversations.GetOrAdd(
             conversationId,
@@ -139,6 +143,7 @@ public sealed class InMemoryConversationStore
                     .Select(message =>
                         new Entitites.ConversationMessage
                         {
+                            TraceJson = message.TraceJson,
                             ConversationId =
                                 conversationId,
 
@@ -192,5 +197,5 @@ public sealed class InMemoryConversationStore
     private sealed record StoredMessage(
         string Role,
         string Content,
-        DateTime CreatedAtUtc);
+        DateTime CreatedAtUtc, string? TraceJson);
 }

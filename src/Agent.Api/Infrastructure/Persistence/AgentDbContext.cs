@@ -38,6 +38,7 @@ public sealed class AgentDbContext : DbContext
             entity.Property(x => x.Id).ValueGeneratedOnAdd();
             entity.Property(x => x.Role).HasMaxLength(30).IsRequired();
             entity.Property(x => x.Content).IsRequired();
+            entity.Property(x => x.TraceJson).HasColumnType("jsonb");
             entity.Property(x => x.CreatedAtUtc).IsRequired();
 
             entity.HasIndex(x => new { x.ConversationId, x.CreatedAtUtc });

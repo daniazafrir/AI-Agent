@@ -54,7 +54,7 @@ public sealed class ConversationsController(
                         {
                             Role = message.Role,
                             Content = message.Content,
-                            UsedTools = []
+                            Trace = Agent.Api.Chat.Models.ConversationTrace.Parse(message.TraceJson)
                         })
                     .ToList()
             };
@@ -85,12 +85,14 @@ public sealed class ConversationDetailsResponse
 
 public sealed class ConversationMessageResponse
 {
+    public Agent.Api.Chat.Models.ConversationTrace? Trace { get; init; }
+    public IReadOnlyList<Agent.Api.Features.Conversation.KnowledgeSource> Sources => Trace?.Sources ?? [];
+    public bool Incomplete => Trace is not null && Trace.Status != "completed";
     public string Role { get; init; } =
         string.Empty;
 
     public string Content { get; init; } =
         string.Empty;
 
-    public IReadOnlyList<string> UsedTools { get; init; } =
-        [];
+    public IReadOnlyList<string> UsedTools => Trace?.UsedTools ?? [];
 }

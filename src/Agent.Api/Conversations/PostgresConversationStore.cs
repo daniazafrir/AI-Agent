@@ -26,6 +26,10 @@ public sealed class PostgresConversationStore(
         string role,
         string content,
         CancellationToken cancellationToken = default)
+        => await AddMessageWithTraceAsync(conversationId, role, content, null, cancellationToken);
+
+    public async Task AddMessageWithTraceAsync(Guid conversationId, string role, string content,
+        string? traceJson, CancellationToken cancellationToken = default)
     {
         if (conversationId == Guid.Empty)
         {
@@ -67,6 +71,7 @@ public sealed class PostgresConversationStore(
             ConversationId = conversationId,
             Role = role.Trim(),
             Content = content.Trim(),
+            TraceJson = traceJson,
             CreatedAtUtc = now
         });
 

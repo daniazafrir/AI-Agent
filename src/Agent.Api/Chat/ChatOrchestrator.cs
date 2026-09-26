@@ -313,16 +313,18 @@ Always answer in the same language as the user's latest message.
                 cancellationToken);
 
 
+        var startedAt = DateTimeOffset.UtcNow;
+        var timer = System.Diagnostics.Stopwatch.StartNew();
         var result =
             await agentRuntime.RunAsync(
                 messages,
                 cancellationToken);
 
-        await conversationService.SaveConversationAsync(
-            conversationId,
-            request.Message,
-            result.AssistantMessage,
-            cancellationToken);
+        await conversationService.SaveUserMessageAsync(conversationId, request.Message, cancellationToken);
+        await conversationService.SaveAssistantTraceAsync(conversationId, result.AssistantMessage,
+            new ConversationTrace { StartedAtUtc = startedAt, TotalMs = timer.ElapsedMilliseconds,
+                Prompts = result.Prompts, ToolCalls = result.ToolCalls, Sources = result.Sources,
+                UsedTools = result.UsedTools, Debug = result.Debug }, cancellationToken);
 
         return new Agent.Api.Contracts.ChatResponse
         {
@@ -358,6 +360,14 @@ Always answer in the same language as the user's latest message.
         // Persist the question before acknowledging it to the client.
         await conversationService.SaveUserMessageAsync(conversationId, request.Message, cancellationToken);
         var completed = false;
+        var startedAt = DateTimeOffset.UtcNow;
+        var timer = System.Diagnostics.Stopwatch.StartNew();
+        long? firstTextMs = null;
+        var prompts = new List<PromptSnapshot>();
+        var calls = new List<ToolTrace>();
+        var usedTools = new HashSet<string>();
+        ChatStreamEvent? completionEvent = null;
+        ConversationTrace? savedTrace = null;
         try
         {
             yield return new ChatStreamEvent
@@ -370,11 +380,18 @@ Always answer in the same language as the user's latest message.
                 var streamEvent in agentRuntime.RunStreamingAsync(messages, cancellationToken))
             {
                 if (streamEvent.Type == "content" && !string.IsNullOrEmpty(streamEvent.Content))
+                {
+                    firstTextMs ??= timer.ElapsedMilliseconds;
                     assistantText.Append(streamEvent.Content);
+                }
+                if (streamEvent.Prompt is not null) prompts.Add(streamEvent.Prompt);
+                if (streamEvent.ToolCall is not null) calls.Add(streamEvent.ToolCall);
+                if (streamEvent.ToolName is not null) usedTools.Add(streamEvent.ToolName);
 
                 if (streamEvent.Type == "completed")
                 {
                     completed = true;
+                    completionEvent = streamEvent;
                     logger.LogInformation(
                         "Completed stream event. UsedTools: {UsedToolsCount}, Sources: {SourcesCount}",
                         streamEvent.UsedTools?.Count ?? 0,
@@ -394,10 +411,18 @@ Always answer in the same language as the user's latest message.
             {
                 // RequestAborted is already cancelled when Stop closes the stream.
                 using var saveTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-                await conversationService.SaveAssistantMessageAsync(
-                    conversationId, finalAssistantMessage, saveTimeout.Token);
+                var trace = new ConversationTrace { StartedAtUtc = startedAt, TotalMs = timer.ElapsedMilliseconds,
+                        FirstTextMs = firstTextMs, Status = completed ? "completed" : cancellationToken.IsCancellationRequested ? "cancelled" : "failed",
+                        Prompts = prompts, ToolCalls = calls, UsedTools = usedTools.ToArray(),
+                        Sources = completionEvent?.Sources ?? calls.LastOrDefault()?.Sources ?? [], Debug = completionEvent?.Debug ?? calls.LastOrDefault(call => call.Debug is not null)?.Debug };
+                await conversationService.SaveAssistantTraceAsync(
+                    conversationId, finalAssistantMessage, trace,
+                    saveTimeout.Token);
+                savedTrace = trace;
             }
         }
+        if (savedTrace is not null && !cancellationToken.IsCancellationRequested)
+            yield return new ChatStreamEvent { Type = "saved", ConversationId = conversationId, Trace = savedTrace };
     }
 
   
