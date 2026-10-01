@@ -149,3 +149,7 @@ button:disabled {
 
   cursor: pointer;
 }
+.document { flex-wrap: wrap; gap: 12px; }
+.document h4 { overflow-wrap: anywhere; min-width: 0; }
+.index-details { flex-basis: 100%; font-size: 14px; overflow-wrap: anywhere; }
+button.reindex { background: #4658bf; }

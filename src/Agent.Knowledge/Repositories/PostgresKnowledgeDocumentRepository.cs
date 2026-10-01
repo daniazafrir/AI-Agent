@@ -8,6 +8,12 @@ public sealed class PostgresKnowledgeDocumentRepository(
     AgentDbContext dbContext)
     : IKnowledgeDocumentRepository
 {
+    public async Task UpdateIndexingDetailsAsync(Guid documentId, string detailsJson, CancellationToken cancellationToken = default)
+    {
+        var changed = await dbContext.KnowledgeDocuments.Where(x => x.Id == documentId)
+            .ExecuteUpdateAsync(update => update.SetProperty(x => x.IndexingDetailsJson, detailsJson), cancellationToken);
+        if (changed != 1) throw new InvalidOperationException("Document disappeared during indexing.");
+    }
     public Task<KnowledgeDocument?> FindByHashAsync(
         string contentHash,
         CancellationToken cancellationToken = default)

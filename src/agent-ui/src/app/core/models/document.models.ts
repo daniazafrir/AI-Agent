@@ -7,6 +7,8 @@ export interface DocumentUploadResponse {
 }
 
 export interface RagDocument {
+    indexingDetails?: { indexedAtUtc: string; embeddingModel: string | null; embeddingDimensions: number | null;
+      chunkSize: number | null; chunkOverlap: number | null; chunkingMode: string } | null;
 
     id: string;
 
@@ -20,4 +22,3 @@ export interface RagDocument {
 
     contentHash: string;
 }
-

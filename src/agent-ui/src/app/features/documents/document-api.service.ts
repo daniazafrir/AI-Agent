@@ -31,6 +31,9 @@ export class DocumentApiService {
             `${environment.apiUrl}/api/documents`
         );
     }
+    reindex(documentId: string): Observable<{ success: boolean }> {
+        return this.http.post<{ success: boolean }>(`${environment.apiUrl}/api/documents/${documentId}/reindex`, {});
+    }
 
     deleteDocument(
         id: string

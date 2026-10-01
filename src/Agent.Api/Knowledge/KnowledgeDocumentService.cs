@@ -95,7 +95,7 @@ public sealed class KnowledgeDocumentService(
          */
         var chunks =
             chunkingService.Split(
-                normalizedContent);
+                normalizedContent, chunkSize: 800, overlap: 150);
 
         if (chunks.Count == 0)
         {
@@ -154,7 +154,9 @@ public sealed class KnowledgeDocumentService(
                 SizeBytes = sizeBytes,
                 ChunkCount = chunks.Count,
                 ContentHash = contentHash,
-                CreatedAtUtc = DateTime.UtcNow
+                CreatedAtUtc = DateTime.UtcNow,
+                IndexingDetails = new DocumentIndexingDetails(DateTime.UtcNow, indexResult.EmbeddingModel,
+                    indexResult.EmbeddingDimensions, 800, 150, "paragraphs-v1")
             };
 
         /*
@@ -424,6 +426,9 @@ public sealed class KnowledgeDocumentService(
             throw new InvalidOperationException(
                 $"Document {documentId} has no persisted chunks.");
         }
+        var ordered = chunks.OrderBy(chunk => chunk.ChunkIndex).ToList();
+        if (ordered.Where((chunk, index) => chunk.ChunkIndex != index || string.IsNullOrWhiteSpace(chunk.Content)).Any())
+            throw new InvalidOperationException("Persisted chunks must be nonempty and have contiguous indices before reindexing.");
 
         logger.LogInformation(
             "Re-indexing document {FileName} ({DocumentId}) with {ChunkCount} chunks.",
@@ -484,6 +489,11 @@ public sealed class KnowledgeDocumentService(
             documentId,
             indexResult.ChunkCount);
 
+        document.IndexingDetails = new DocumentIndexingDetails(DateTime.UtcNow, indexResult.EmbeddingModel,
+            indexResult.EmbeddingDimensions, document.IndexingDetails?.ChunkSize,
+            document.IndexingDetails?.ChunkOverlap, "persisted-chunks");
+        await repository.UpdateIndexingDetailsAsync(documentId, document.IndexingDetailsJson!, cancellationToken);
+
         return true;
     }
 
@@ -496,6 +506,8 @@ public sealed class KnowledgeDocumentService(
 
     private sealed class McpIndexResult
     {
+        public string? EmbeddingModel { get; init; }
+        public int? EmbeddingDimensions { get; init; }
         public bool Success { get; init; }
 
         public Guid DocumentId { get; init; }

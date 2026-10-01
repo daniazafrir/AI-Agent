@@ -1,3 +1,6 @@
+<p dir="rtl">אינדוקס מחדש מייצר embeddings לקטעים השמורים, ללא שינוי חלוקת המסמך. החיפוש במסמך עשוי להיות חסר בזמן הפעולה.</p>
+@if (notice()) { <p role="status">{{ notice() }}</p> }
+@if (error()) { <p role="alert">{{ error() }}</p> }
 @for (
     document of documents();
     track document.id
@@ -23,7 +26,19 @@
         {{ document.createdAtUtc | date }}
     </div>
 
+    <details class="index-details" dir="rtl">
+      <summary>פרטי אינדוקס</summary>
+      @if (document.indexingDetails; as details) {
+        <p>אינדוקס מוצלח אחרון: {{ details.indexedAtUtc | date:'yyyy-MM-dd HH:mm:ss':'UTC' }} UTC</p>
+        <p>מודל: {{ details.embeddingModel ?? 'לא תועד' }}</p>
+        <p>ממדי embedding: {{ details.embeddingDimensions ?? 'לא תועד' }}</p>
+        <p>גודל קטע מוגדר: {{ details.chunkSize ?? 'לא תועד' }} · חפיפה: {{ details.chunkOverlap ?? 'לא תועד' }} (תווים)</p>
+        <p>{{ details.chunkingMode === 'persisted-chunks' ? 'שימוש חוזר בקטעים השמורים' : 'חלוקה לפי פסקאות' }}</p>
+      } @else { <p>פרטי האינדוקס לא תועדו עבור מסמך זה. אינדוקס מחדש יתעד את המודל והמועד; הגדרות החלוקה הישנות יישארו לא ידועות.</p> }
+    </details>
+    <button type="button" class="reindex" [disabled]="!!busy()" (click)="reindex(document)">{{ busy() === document.id ? 'מאנדקס…' : 'אינדוקס מחדש' }}</button>
     <button
+        [disabled]="!!busy()"
         mat-stroked-button
         color="warn"
         (click)="delete(document)">

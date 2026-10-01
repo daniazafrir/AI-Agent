@@ -86,6 +86,8 @@ public sealed class RagService(
 
         return new DocumentIndexResult
         {
+            EmbeddingModel = embeddingService.ModelName,
+            EmbeddingDimensions = vectorChunks.Count > 0 ? vectorChunks[0].Vector.Length : null,
             Success = true,
             DocumentId = documentId,
             ChunkCount = vectorChunks.Count,

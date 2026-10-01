@@ -1,12 +1,15 @@
 import {
   Component,
-  effect,
+  DestroyRef,
   inject,
   OnInit,
   signal
 } from '@angular/core';
 
 import { DatePipe } from '@angular/common';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { finalize } from 'rxjs';
+import { KnowledgeEventsService } from './knowledge-events.service';
 
 import { RagDocument } from 'src/app/core/models/document.models';
 import { DocumentApiService } from '../document-api.service';
@@ -20,6 +23,11 @@ import { DocumentApiService } from '../document-api.service';
 })
 export class KnowledgeBaseComponent
   implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly events = inject(KnowledgeEventsService);
+  readonly busy = signal<string | null>(null);
+  readonly notice = signal('');
+  readonly error = signal('');
 
   readonly api =
     inject(DocumentApiService);
@@ -29,15 +37,11 @@ export class KnowledgeBaseComponent
 
   constructor() {
 
-    effect(() => {
-
-        this.load();
-
-    });
+    this.events.refresh$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());
 
 }
   ngOnInit(): void {
-    throw new Error('Method not implemented.');
+    this.load();
   }
   
   
@@ -45,12 +49,14 @@ export class KnowledgeBaseComponent
   load(): void {
     this.api
       .getDocuments()
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: documents => {
           this.documents.set(documents);
         },
 
         error: error => {
+          this.error.set('לא ניתן לטעון את רשימת המסמכים.');
           console.error(
             'Failed to load documents.',
             error
@@ -62,8 +68,11 @@ export class KnowledgeBaseComponent
   delete(
     document: RagDocument
   ): void {
+    if (this.busy()) return;
+    this.busy.set(document.id);
     this.api
       .deleteDocument(document.id)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(null)))
       .subscribe({
         next: () => {
           this.documents.update(
@@ -81,5 +90,21 @@ export class KnowledgeBaseComponent
           );
         }
       });
+  }
+  reindex(document: RagDocument): void {
+    if (this.busy()) return;
+    this.busy.set(document.id);
+    this.error.set('');
+    this.notice.set('');
+    this.api.reindex(document.id).pipe(
+      takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(null))
+    ).subscribe({
+      next: result => {
+        if (!result.success) { this.error.set('האינדוקס לא הושלם.'); return; }
+        this.notice.set('האינדוקס מחדש הושלם.');
+        this.load();
+      },
+      error: () => this.error.set('האינדוקס מחדש נכשל. ייתכן שהאינדקס הווקטורי חלקי; הקטעים השמורים נשמרו וניתן לנסות שוב.')
+    });
   }
 }

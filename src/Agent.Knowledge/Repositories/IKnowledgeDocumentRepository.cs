@@ -4,6 +4,7 @@ namespace Agent.Knowledge.Repositories;
 
 public interface IKnowledgeDocumentRepository
 {
+    Task UpdateIndexingDetailsAsync(Guid documentId, string detailsJson, CancellationToken cancellationToken = default);
     Task<KnowledgeDocument?> FindByHashAsync(
         string contentHash,
         CancellationToken cancellationToken = default);

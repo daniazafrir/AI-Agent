@@ -13,7 +13,7 @@ by feature. Updated 2026-09-24.
 | 5 | Performance | Embedding/vector/keyword/ranking durations now flow from MCP to API debug and Angular bars for the latest search. Missing timings stay null; parallel searches are explicitly labeled. Backend tests and Angular compilation checked; live browser acceptance pending after restarting MCP and API. Request timing history already exists. |
 | 6 | RAG Analytics | Returned versus context-included entries now tracked at tool-message construction, with omission reasons and character counts. Vector threshold exclusions shown as a count only. Backend tests and Angular compilation passed; live acceptance pending. See rag-analytics.md. |
 | 7 | History and Replay | Versioned per-answer trace persistence and read-only replay implemented, including completed tools, context, debug, sources, conditional prompts and server timings. Migration and live acceptance pending. Partial/failure limitations documented in history-replay.md. |
-| 8 | Knowledge administration | Upload/list/delete exist; re-index and indexing configuration metadata remain. |
+| 8 | Knowledge administration | Existing reindex API exposed in UI; successful indexing model/dimensions/time and known chunking parameters persisted. Legacy unknowns remain unknown. Migration and live acceptance pending; see knowledge-administration.md for non-atomic reindex limitations. |
 
 Supporting work completed separately: weather tool, weather follow-ups,
 acceptance tests, integration preflight runner, CI unit tests and Angular build.

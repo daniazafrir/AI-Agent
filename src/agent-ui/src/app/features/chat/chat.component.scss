@@ -11,7 +11,7 @@
   width: 100%;
   max-width: none;
   min-width: 0;
-  height: 100vh;
+  height: 100%;
   min-height: 0;
 
   margin: 0 auto;
@@ -22,6 +22,7 @@
 }
 
 .chat-header {
+  flex: 0 0 auto;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -170,8 +171,10 @@ app-composer {
 }
 
 .knowledge-section {
-  margin: 16px 24px 20px;
-  padding: 20px;
+  flex: 0 0 auto;
+  min-width: 0;
+  margin: 8px 0 12px;
+  padding: 0;
 
   background: #fff;
 
@@ -196,6 +199,26 @@ app-composer {
   min-height: 0;
   min-width: 0;
   overflow: hidden;
+}
+
+.knowledge-section > summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  direction: rtl;
+}
+
+.knowledge-section > summary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -3px;
+  border-radius: 16px;
+}
+
+.knowledge-body {
+  max-height: min(32dvh, 360px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px 16px;
 }
 
 .chat-layout.debug-collapsed {
@@ -246,12 +269,27 @@ app-debug-panel {
   }
 
   .chat-header {
-    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 10px;
   }
+  .chat-header h1 { font-size: 1.5rem; }
+  .subtitle { font-size: 0.85rem; }
+  .new-chat-button { padding: 8px 10px; }
 }
 
 @media (max-width: 1000px) {
+  .chat-layout, .chat-layout.debug-collapsed {
+    grid-template-columns: minmax(0, 1fr);
+  }
   app-debug-panel {
     display: none;
   }
+}
+
+@media (max-height: 600px) {
+  .chat-header h1 { font-size: 1.4rem; }
+  .eyebrow, .subtitle { display: none; }
+  .chat-header { padding-bottom: 8px; margin-bottom: 0; }
+  .knowledge-body { max-height: 25dvh; }
+  .chat-page { padding-block: 8px; }
 }
