@@ -44,7 +44,7 @@ public sealed partial class ChatAnswerAcceptanceTests
                 "What is the mileage reimbursement rate?",
                 new[] {
                     @"\bmileage\b",
-                    @"(?:\bnot\s+(?:be\s+)?(?:defined|specified|provided|available|found|included)\b|\bdoes\s+not\s+(?:define|specify|provide|include|contain)\b|\bno\s+(?:defined\s+|specified\s+)?mileage\s+reimbursement\s+rate\b)"
+                    @"(?:\bnot\s+(?:be\s+)?(?:defined|specified|provided|available|found|included)\b|\b(?:do|does)\s+not\s+(?:define|specify|provide|include|contain)\b|\bno\s+(?:defined\s+|specified\s+)?mileage\s+reimbursement\s+rate\b)"
                 }),
             "vacation" => (
                 "How many vacation days do employees receive?",
