@@ -101,6 +101,7 @@ public sealed class ToolProcessor(
                 context.Debug = AgentLoop.ExtractDebugInfo(result.RawContent, tool.Arguments, result.Analytics);
                 KnowledgeSearchRetry.Observe(context, tool.Arguments, result.RawContent);
             }
+            HolidayFailure.Observe(context, tool.Name, result.RawContent);
             context.Messages.Add(
                 new ToolChatMessage(
                     tool.Id,

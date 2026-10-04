@@ -20,4 +20,5 @@ public sealed class AgentContext
     public List<ToolTrace> ToolCalls { get; } = [];
     public bool EnglishKnowledgeRetryPending { get; set; }
     public bool EnglishKnowledgeRetryRequested { get; set; }
+    public string? HolidayFailureMessage { get; set; }
 }

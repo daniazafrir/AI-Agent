@@ -77,6 +77,13 @@ public sealed class AgentLoop(
                     context,
                     cancellationToken);
 
+                if (context.HolidayFailureMessage is { } failure)
+                    return new AgentRunResult
+                    {
+                        AssistantMessage = failure, UsedTools = context.UsedTools.ToArray(),
+                        Sources = context.Sources.ToList(), Debug = context.Debug,
+                        Prompts = context.Prompts.ToArray(), ToolCalls = context.ToolCalls.ToArray()
+                    };
                 continue;
             }
 
@@ -391,6 +398,7 @@ public sealed class AgentLoop(
                             toolCall.FunctionArguments,
                             cancellationToken);
 
+                    HolidayFailure.Observe(context, toolCall.FunctionName, result.RawContent);
                     if (string.Equals(
                      toolCall.FunctionName,
                      "search_knowledge",
@@ -440,6 +448,16 @@ public sealed class AgentLoop(
                     };
                 }
 
+                if (context.HolidayFailureMessage is { } failure)
+                {
+                    yield return new ChatStreamEvent { Type = "content", Content = failure };
+                    yield return new ChatStreamEvent
+                    {
+                        Type = "completed", UsedTools = context.UsedTools.ToArray(),
+                        Sources = context.Sources.ToArray(), Debug = context.Debug
+                    };
+                    yield break;
+                }
                 continue;
             }
 
