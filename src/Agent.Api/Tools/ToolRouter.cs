@@ -38,6 +38,9 @@ public sealed class ToolRouter(
 
             switch (toolName)
             {
+                case "get_jewish_holidays":
+                    if (NeedsHolidays(question) || IsHolidayFollowUp(messages, question)) tools.Add(tool);
+                    break;
                 case "get_weather":
                     if (NeedsWeather(question) || IsWeatherFollowUp(messages, question))
                         tools.Add(tool);
@@ -79,6 +82,20 @@ public sealed class ToolRouter(
         }
 
         return tools;
+    }
+
+    private static bool NeedsHolidays(string question) => Regex.IsMatch(question,
+        @"(?i)שמחת\s*תורה|שמיני\s*עצרת|ראש\s*השנה|יום\s*כיפור|סוכות|פסח|שבועות|חנוכה|פורים|חגים|מתי.*חג|\b(simchat|simchas|shemini|shmini|sukkot|sukkos|pesach|passover|shavuot|shavuos|hanukkah|chanukah|purim|rosh hashanah|yom kippur|jewish holidays?)\b");
+
+    private static bool IsHolidayFollowUp(IReadOnlyList<ChatMessage> messages, string question)
+    {
+        // Copied example questions often include typographic quotation marks.
+        // Trim only the boundaries: the gershayim inside חו״ל is meaningful.
+        question = question.Trim().Trim('"', '\'', '„', '“', '”', '׳', '״', '«', '»').Trim();
+        if (!Regex.IsMatch(question, @"(?i)^(?:ו?מה\s+|ו|and\s+|what about\s+)?(?:ב?שנה הבאה|ב?שנה שעברה|ב?ישראל|ב?חו.?ל|next year|last year|in israel|in the diaspora|20\d{2})[?!.\s]*$")) return false;
+        var index = messages.ToList().FindLastIndex(message => message is UserChatMessage);
+        var previous = messages.Take(index).Where(message => message is UserChatMessage or AssistantChatMessage).TakeLast(2);
+        return previous.Any(message => NeedsHolidays(string.Join(" ", message.Content.Select(part => part.Text))));
     }
 
     private static bool NeedsWeather(string question) =>

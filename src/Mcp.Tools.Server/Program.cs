@@ -1,5 +1,6 @@
 using Mcp.Tools.Server.Features.Rag;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpClient<Mcp.Tools.Server.Tools.HolidayTools>(client => client.Timeout = TimeSpan.FromSeconds(20));
 builder.Services.AddRagServices(builder.Configuration);
 builder.Services.AddHttpClient<Mcp.Tools.Server.Tools.WeatherTools>(client =>
     client.Timeout = TimeSpan.FromSeconds(20));

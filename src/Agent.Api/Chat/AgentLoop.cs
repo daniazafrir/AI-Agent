@@ -637,7 +637,10 @@ public sealed class AgentLoop(
                     : selectedTools.Any(tool => tool.FunctionName == "get_weather") &&
                       !context.UsedTools.Contains("get_weather", StringComparer.OrdinalIgnoreCase)
                         ? ChatToolChoice.CreateFunctionChoice("get_weather")
-                        : ChatToolChoice.CreateAutoChoice();
+                        : selectedTools.Any(tool => tool.FunctionName == "get_jewish_holidays") &&
+                          !context.UsedTools.Contains("get_jewish_holidays", StringComparer.OrdinalIgnoreCase)
+                            ? ChatToolChoice.CreateFunctionChoice("get_jewish_holidays")
+                            : ChatToolChoice.CreateAutoChoice();
         }
 
         logger.LogInformation(

@@ -16,6 +16,25 @@ Your goal is to answer accurately and use tools only when they are appropriate.
 
 APPLICATION CONTEXT
 
+JEWISH HOLIDAY DATES
+For Jewish holiday date questions, call get_jewish_holidays before answering.
+Use the current Gregorian year from CURRENT DATE CONTEXT when no year is given.
+Resolve "next year" relative to the year discussed in the preceding turn.
+For a region-only follow-up, retain the most recently discussed year and holiday.
+Call the holiday tool again for year or region follow-ups; do not extrapolate dates
+from previous answers or claim Hebcal verified a year that was not retrieved.
+Do not use dates from an old conversation as today's date.
+Use region=both when location is unspecified; distinguish Israel and diaspora
+if their dates differ. Hebrew language alone does not establish location.
+In Israel, Shmini Atzeret and Simchat Torah are on the same day.
+For an eve question use the tool's beginsEveningOn for the relevant Yom Tov,
+or its explicit Erev event date. Never confuse that with the daytime holiday date.
+Include the year, region and Hebcal source. Exact local entry/exit times are
+not supplied; do not invent them. If the tool fails, say dates could not be
+verified. Do not offer to search later instead of executing the tool now.
+If the question requests a Hebrew year, clarify the Gregorian year this tool
+supports rather than passing a Hebrew year as a Gregorian year.
+
 This application is an AI assistant built with Angular, .NET, OpenAI,
 Model Context Protocol (MCP), and retrieval-augmented generation (RAG).
 In this application, an unqualified question about MCP refers to
@@ -288,6 +307,13 @@ LANGUAGE
 
 Always answer in the same language as the user's latest message.
 """;
+    private static string SystemPromptWithDate()
+    {
+        var utc = DateTimeOffset.UtcNow;
+        var local = TimeZoneInfo.ConvertTime(utc, TimeZoneInfo.FindSystemTimeZoneById("Asia/Jerusalem"));
+        return SystemPrompt + $"\n\nCURRENT DATE CONTEXT\nUTC now: {utc:O}\nApplication reference date: {local:yyyy-MM-dd} ({local.DayOfWeek}), timezone Asia/Jerusalem. This is not an assertion of the user's location.";
+    }
+
     public async Task<Agent.Api.Contracts.ChatResponse> ChatAsync(
     Agent.Api.Contracts.ChatRequest request,
     CancellationToken cancellationToken = default)
@@ -309,7 +335,7 @@ Always answer in the same language as the user's latest message.
             await conversationService.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                SystemPrompt,
+                SystemPromptWithDate(),
                 cancellationToken);
 
 
@@ -351,7 +377,7 @@ Always answer in the same language as the user's latest message.
             await conversationService.BuildMessagesAsync(
                 conversationId,
                 request.Message,
-                SystemPrompt,
+                SystemPromptWithDate(),
                 cancellationToken);
 
         var assistantText =
