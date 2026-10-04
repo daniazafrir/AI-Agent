@@ -88,6 +88,25 @@
 .error-message {
   color: var(--color-danger);
 }
+
+.upload-header > div, .file-picker > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+mat-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 768px) {
+  .upload-card { padding: 12px; border-radius: 14px; }
+  .upload-header { gap: 8px; }
+  .upload-header h3 { font-size: 1.05rem; }
+  .upload-header p { font-size: 0.9rem; }
+  .file-picker { padding: 10px; gap: 8px; }
+}
 .upload-card.drag-active {
   border-color: var(--color-primary);
   background: #f0f3ff;

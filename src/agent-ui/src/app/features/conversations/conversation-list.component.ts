@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   inject,
+  output,
   signal
 } from '@angular/core';
 
@@ -26,6 +27,7 @@ import { ConversationSummary } from 'src/app/core/models/chat.models';
 })
 export class ConversationListComponent
   implements OnInit {
+  readonly conversationSelected = output<void>();
 
   private readonly api =
     inject(ConversationApiService);
@@ -95,6 +97,7 @@ export class ConversationListComponent
           this.state.loadConversation(
             conversation
           );
+          this.conversationSelected.emit();
 
         },
 
@@ -114,6 +117,7 @@ export class ConversationListComponent
   newConversation(): void {
 
     this.state.clear();
+    this.conversationSelected.emit();
 
     this.loadConversations();
 

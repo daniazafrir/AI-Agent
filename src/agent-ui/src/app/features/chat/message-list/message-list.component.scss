@@ -164,9 +164,16 @@
 }
 
 @media (max-width: 768px) {
+  .messages { padding-inline: 0; }
+  .message-row { position: relative; }
   .bubble {
     max-width: 90%;
+    min-width: 0;
+    padding: 14px;
   }
+  .agent-bubble { width: 100%; max-width: 100%; }
+  .agent-avatar { position: absolute; left: 14px; top: 12px; margin: 0; font-size: 1.2rem; }
+  .agent-bubble .message-header { padding-left: 32px; min-height: 26px; }
 }
 
 .sources {
@@ -232,6 +239,10 @@
 }
 
 .source-meta {
+    flex: 0 0 auto;
+    white-space: nowrap;
     font-size: 12px;
     color: #9ca3af;
 }
+
+.source-button > span:first-child { min-width: 0; overflow-wrap: anywhere; }

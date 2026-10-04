@@ -1,10 +1,39 @@
 .shell {
   height: 100vh;
+  height: 100dvh;
 }
 
 mat-sidenav {
   width: 320px;
+  max-width: 85vw;
 }
+
+mat-sidenav-content {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+app-chat {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  height: auto;
+}
+
+.mobile-navigation { flex: 0 0 auto; padding: 6px 12px; }
+.navigation-button {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+  cursor: pointer;
+}
+.navigation-button:focus-visible { outline: 2px solid #4f46e5; }
 
 .sidebar-content {
   display: flex;

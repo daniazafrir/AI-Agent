@@ -1,22 +1,21 @@
 <mat-sidenav-container class="shell" dir="ltr">
-
-    <mat-sidenav mode="side" opened>
-
-        <div class="sidebar-content">
-
-            <app-conversation-list />
-
-            <div class="sidebar-divider"></div>
-
-
-          
-
-        </div>
-
-    </mat-sidenav>
-
-    <mat-sidenav-content>
-        <app-chat />
-    </mat-sidenav-content>
-
+  <mat-sidenav #drawer id="conversation-drawer"
+    [mode]="mobile() ? 'over' : 'side'" [opened]="!mobile()">
+    <div class="sidebar-content">
+      @if (mobile()) {
+        <button class="navigation-button" type="button" (click)="drawer.close()"
+          aria-label="סגירת רשימת השיחות">סגירה ✕</button>
+      }
+      <app-conversation-list (conversationSelected)="mobile() && drawer.close()" />
+    </div>
+  </mat-sidenav>
+  <mat-sidenav-content>
+    @if (mobile()) {
+      <nav class="mobile-navigation" aria-label="ניווט שיחות">
+        <button class="navigation-button" type="button" (click)="drawer.toggle()"
+          aria-controls="conversation-drawer" [attr.aria-expanded]="drawer.opened">☰ שיחות</button>
+      </nav>
+    }
+    <app-chat />
+  </mat-sidenav-content>
 </mat-sidenav-container>

@@ -28,6 +28,7 @@
         type="button"
         mat-flat-button
         class="send-button"
+        aria-label="שליחה"
         [disabled]="message.invalid"
         (click)="submit()">
 
@@ -41,6 +42,7 @@
         type="button"
         mat-flat-button
         class="stop-button"
+        aria-label="עצירת התשובה"
         (click)="stopGeneration()">
 
         <mat-icon>stop</mat-icon>

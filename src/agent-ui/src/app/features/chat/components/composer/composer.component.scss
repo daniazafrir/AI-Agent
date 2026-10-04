@@ -9,16 +9,14 @@
 }
 
 .composer-shell {
-  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
 
   width: 100%;
   min-width: 0;
 
-  padding:
-    16px
-    76px
-    34px
-    18px;
+  padding: 14px;
 
   border: 1px solid #4d6cf0;
   border-radius: 18px;
@@ -45,6 +43,7 @@
 }
 
 textarea {
+  grid-column: 1 / -1;
   display: block;
 
   width: 100%;
@@ -80,10 +79,9 @@ textarea {
 }
 
 .composer-actions {
-  position: absolute;
-
-  right: 14px;
-  bottom: 36px;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
 
   display: flex;
   align-items: center;
@@ -91,12 +89,14 @@ textarea {
 }
 
 .attach-button,
-.send-button {
+.send-button,
+.stop-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
 
   width: 42px;
+  min-width: 44px;
   height: 42px;
 
   border: 0;
@@ -106,10 +106,9 @@ textarea {
 }
 
 .attach-button {
-  position: absolute;
-
-  left: 14px;
-  bottom: 34px;
+  grid-column: 1;
+  grid-row: 2;
+  justify-self: start;
 
   background: transparent;
 
@@ -137,10 +136,8 @@ textarea {
 }
 
 .composer-hint {
-  position: absolute;
-
-  right: 18px;
-  bottom: 10px;
+  grid-column: 1 / -1;
+  text-align: right;
 
   color: var(--color-text-secondary);
 
@@ -150,10 +147,6 @@ textarea {
 }
 
 @media (max-width: 600px) {
-  .composer-shell {
-    padding-right: 64px;
-  }
-
   .composer-hint {
     display: none;
   }
