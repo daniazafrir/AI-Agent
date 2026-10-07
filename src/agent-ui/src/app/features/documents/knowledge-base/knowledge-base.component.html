@@ -1,6 +1,8 @@
 <p dir="rtl">אינדוקס מחדש מייצר embeddings לקטעים השמורים, ללא שינוי חלוקת המסמך. החיפוש במסמך עשוי להיות חסר בזמן הפעולה.</p>
-@if (notice()) { <p role="status">{{ notice() }}</p> }
-@if (error()) { <p role="alert">{{ error() }}</p> }
+@if (!feedbackDocumentId()) {
+  @if (notice()) { <p role="status">{{ notice() }}</p> }
+  @if (error()) { <p role="alert">{{ error() }}</p> }
+}
 @for (
     document of documents();
     track document.id
@@ -47,6 +49,10 @@
 
     </button>
 
+    @if (feedbackDocumentId() === document.id) {
+      @if (error()) { <p class="document-feedback error" role="alert" dir="rtl">{{ error() }}</p> }
+      @if (notice()) { <p class="document-feedback" role="status" dir="rtl">{{ notice() }}</p> }
+    }
 </div>
 
 }

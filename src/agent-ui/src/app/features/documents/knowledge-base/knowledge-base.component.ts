@@ -28,6 +28,7 @@ export class KnowledgeBaseComponent
   readonly busy = signal<string | null>(null);
   readonly notice = signal('');
   readonly error = signal('');
+  readonly feedbackDocumentId = signal<string | null>(null);
 
   readonly api =
     inject(DocumentApiService);
@@ -56,6 +57,7 @@ export class KnowledgeBaseComponent
         },
 
         error: error => {
+          this.feedbackDocumentId.set(null);
           this.error.set('לא ניתן לטעון את רשימת המסמכים.');
           console.error(
             'Failed to load documents.',
@@ -96,6 +98,7 @@ export class KnowledgeBaseComponent
     this.busy.set(document.id);
     this.error.set('');
     this.notice.set('');
+    this.feedbackDocumentId.set(document.id);
     this.api.reindex(document.id).pipe(
       takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(null))
     ).subscribe({

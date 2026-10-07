@@ -153,3 +153,5 @@ button:disabled {
 .document h4 { overflow-wrap: anywhere; min-width: 0; }
 .index-details { flex-basis: 100%; font-size: 14px; overflow-wrap: anywhere; }
 button.reindex { background: #4658bf; }
+.document-feedback { flex-basis: 100%; margin: 0; padding: 12px; border-radius: 8px; background: #eef6ee; overflow-wrap: anywhere; }
+.document-feedback.error { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
